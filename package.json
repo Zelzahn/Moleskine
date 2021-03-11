@@ -1,0 +1,32 @@
+{
+  "name": "moleskine",
+  "version": "1.0.0",
+  "description": "A Discord bot for the popular Belgian tv show 'De Mol'",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zelzahn/Moleskine.git"
+  },
+  "author": "Zelzahn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Zelzahn/Moleskine/issues"
+  },
+  "homepage": "https://github.com/Zelzahn/Moleskine#readme",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "canvas": "^2.7.0",
+    "chalk": "^4.1.0",
+    "chart.js": "^2.9.4",
+    "chartjs-node-canvas": "^3.1.0",
+    "discord.js": "^12.5.1",
+    "discord.js-commando": "github:discordjs/Commando",
+    "eslint": "^7.21.0",
+    "moment": "^2.29.1",
+    "mongoose": "^5.11.19",
+    "node-fetch": "^2.6.1"
+  }
+}

@@ -1,31 +1,26 @@
-// const Discord = require('discord.js');
-// const client = new Discord.Client();
 import { CommandoClient } from "discord.js-commando";
 import { join } from "path";
 import winston, { format } from "winston";
 import { prefix, ownerid, token } from "../config.json";
-import chalk from "chalk";
 
 // Logging levels used: error, warn, info
 export const logger = winston.createLogger({
   transports: [new winston.transports.File({ filename: "moleskine.log" })],
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.align(),
-    winston.format.printf(
-      (log) => `${log.timestamp} : [${log.level}] ${log.message}`
-    )
+  format: format.combine(
+    format.timestamp(),
+    format.align(),
+    format.printf((log) => `${log.timestamp} : [${log.level}] ${log.message}`)
   ),
 });
 
 if (process.env.NODE_ENV !== "production") {
   logger.add(
     new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.align(),
-        winston.format.colorize(),
-        winston.format.printf(
+      format: format.combine(
+        format.timestamp(),
+        format.align(),
+        format.colorize(),
+        format.printf(
           (log) => `${log.timestamp} : [${log.level}] ${log.message}`
         )
       ),

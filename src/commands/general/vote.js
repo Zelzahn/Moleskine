@@ -1,6 +1,7 @@
 import { Command } from "discord.js-commando";
 import { participants } from "../../../config.json";
 import { MessageEmbed } from "discord.js";
+import { logger } from "../../index";
 
 export default class VoteCommand extends Command {
   constructor(client) {
@@ -14,8 +15,7 @@ export default class VoteCommand extends Command {
   }
 
   async run(message) {
-    // TODO: Logger deftig in een aparte file doen
-    console.log(`${message.author.username} has used vote.`);
+    logger.log("info", `${message.author.username} has used vote.`);
 
     const filter = (m) => m.author.id === message.author.id;
 
@@ -62,7 +62,7 @@ export default class VoteCommand extends Command {
 
     collected.first().react("✅");
 
-    console.log(collected.first().content);
+    logger.log(collected.first().content);
   }
 
   onError(err, message) {

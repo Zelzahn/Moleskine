@@ -1,8 +1,8 @@
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
 
-const configSchema = mongoose.Schema({
-    name: { type: String, required: true },
-    value: { type: mongoose.Schema.Types.Mixed, required: true }
+const configSchema = Schema({
+  name: { type: String, required: true },
+  value: { type: Schema.Types.Mixed, required: true },
 });
 
-module.exports = mongoose.model('config', configSchema);
+export default model("config", configSchema);

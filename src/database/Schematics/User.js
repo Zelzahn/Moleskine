@@ -20,9 +20,9 @@ const week = {
 const userSchema = mongoose.Schema({
   guildId: reqString,
   userId: reqString,
-  remainingPoints: { type: Number, min: 0, max: 1000 },
+  remainingPoints: { type: Number, min: 0, max: 1000, default: 1000, required: true },
 });
-userSchema.index({ guilId: 1, userId: 1 }, { unique: true })
+userSchema.index({ guilId: 1, userId: 1 }, { unique: true });
 
 const betSchema = mongoose.Schema({
   week: week,
@@ -30,7 +30,7 @@ const betSchema = mongoose.Schema({
   user: { type: mongoose.Schema.ObjectId, ref: "user", required: true },
   candidate: { type: mongoose.Schema.ObjectId, ref: "candidate", required: true },
 });
-betSchema.index({ week: 1, user: 1, candidate: 1 }, { unique: true })
+betSchema.index({ week: 1, user: 1, candidate: 1 }, { unique: true });
 
 const moleBetSchema = mongoose.Schema({
   user: { type: mongoose.Schema.ObjectId, ref: "user", required: true },

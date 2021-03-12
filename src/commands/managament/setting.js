@@ -1,5 +1,5 @@
 import { Command } from "discord.js-commando";
-import { setSetting } from "../../database/mongo"
+import { setSetting } from "../../database/mongo";
 
 export default class SettingCommand extends Command {
     constructor(client) {
@@ -19,15 +19,15 @@ export default class SettingCommand extends Command {
                 type: "integer|string"
             }],
             memberName: "setting"
-        })
+        });
     }
 
     async run(message, { setting, value }) {
         if (message.author.id === "131121315242311680" || message.author.id === "223837254118801408") {
             if (setting.toLowerCase() === "week") {
-                setSetting("week", Number(value))
+                await setSetting("week", Number(value));
             } else {
-                setSetting(setting, value)
+                await setSetting(setting, value);
             }
         }
     }

@@ -25,10 +25,11 @@ export default class SettingCommand extends Command {
   }
 
   async run(message, { setting, value }) {
-    const owners = getSetting("owners");
+    const owners = await getSetting("owners");
     if (owners.includes(message.author.id)) {
-      if (setting.toLowerCase() === "week") setSetting("week", Number(value));
-      else setSetting(setting, value);
+      if (setting.toLowerCase() === "week")
+        await setSetting("week", Number(value));
+      else await setSetting(setting, value);
     }
   }
 }

@@ -22,7 +22,7 @@ const candidateSchema = mongoose.Schema({
 const userSchema = mongoose.Schema({
   guildId: reqString,
   userId: reqString,
-  remainingPoints: { type: Number, min: 0, max: 1000 },
+  remainingPoints: { type: Number, min: 0, max: 1000, default: 1000, required: true },
 });
 userSchema.index({ guilId: 1, userId: 1 }, { unique: true });
 

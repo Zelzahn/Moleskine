@@ -1,13 +1,13 @@
 // const Discord = require('discord.js');
 // const client = new Discord.Client();
-const { CommandoClient } = require("discord.js-commando");
-const path = require("path");
+import { CommandoClient } from "discord.js-commando";
+import { join } from "path";
 
-const config = require("./config.json");
+import { prefix, ownerid, token } from "../config.json";
 
 const client = new CommandoClient({
-  commandPrefix: config.prefix,
-  owner: config.ownerid,
+  commandPrefix: prefix,
+  owner: ownerid,
 });
 
 client.registry
@@ -15,7 +15,7 @@ client.registry
   .registerDefaultGroups()
   .registerGroups([["general", "General commands"]])
   .registerDefaultCommands()
-  .registerCommandsIn(path.join(__dirname, "commands"));
+  .registerCommandsIn(join(__dirname, "commands"));
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}! (${client.user.id})`);
@@ -27,4 +27,4 @@ client.once("ready", () => {
 
 client.on("error", console.error);
 
-client.login(config.token);
+client.login(token);

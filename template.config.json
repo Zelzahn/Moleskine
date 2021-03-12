@@ -4,5 +4,6 @@
   "mongoDB": "MONGODB_URL_GOES_HERE",
   "color": "#FCE8C3",
   "adminRole": "TODO",
-  "ownerid": "YOUR_ID_GOES_HERE"
+  "ownerid": "YOUR_ID_GOES_HERE",
+  "participants": ["Alice", "Bob", "Carol"]
 }

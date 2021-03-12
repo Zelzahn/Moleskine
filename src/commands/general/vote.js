@@ -1,6 +1,7 @@
-const { Command } = require("discord.js-commando");
+import { Command } from "discord.js-commando";
+import { participants } from "../../../config.json";
 
-module.exports = class VoteCommand extends Command {
+export default class VoteCommand extends Command {
   constructor(client) {
     super(client, {
       name: "vote",
@@ -38,8 +39,12 @@ module.exports = class VoteCommand extends Command {
 
     collected.first().react("✅");
 
-    const persons = collected.first().content.split(" ");
-    console.log(persons);
+    const persons = collected
+      .first()
+      .content.split(" ")
+      .map((person) => person.split(":"));
+
+    console.log(persons.every((p) => participants.includes(p[0])));
 
     message.say("Wie is de mol?");
 
@@ -58,4 +63,4 @@ module.exports = class VoteCommand extends Command {
 
     console.log(collected.first().content);
   }
-};
+}

@@ -21,14 +21,13 @@ export default class VoteCommand extends Command {
       `${message.author.username} (${message.author.id}) has used vote.`
     );
 
-    const filter = (m) => m.author.id === message.author.id;
-
     await message.embed({
       title: "Wie denk je dat er allemaal de aflevering zal overleven?",
       description:
-        "Syntax: [naam]:[bedrag] herhaal dit voor iedere persoon\nVoorbeeld: Alice:200 Bob:600 Carol:200",
+        "Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200",
     });
 
+    const filter = (m) => m.author.id === message.author.id;
     let collected = await message.channel
       .awaitMessages(filter, {
         max: 1,
@@ -39,13 +38,29 @@ export default class VoteCommand extends Command {
         throw new Error("Timeout: You waited too long to respond.");
       });
 
-    const persons = collected
+    let persons = collected
       .first()
       .content.split(" ")
       .map((person) => person.split(":"));
 
-    if (!persons.every((p) => participants.includes(p[0])))
+    if (!persons.every(([p, _]) => participants.includes(p.toLowerCase())))
       throw new Error("Not every person is a participant");
+
+    persons = persons.map(([person, val]) => {
+      return [person, Number(val)];
+    });
+
+    if (persons.some(([_, val]) => val < 0))
+      throw new Error("You can not give negative points.");
+
+    const score = persons.reduce((a, [_, b]) => a + b, 0);
+    // TODO: Checken of dat de score niet hoger dan huidig resterende saldo is
+    if (score > 1000)
+      throw new Error(
+        "The total amount of points you give out should be lower than 1000."
+      );
+
+    // TODO: API-call voor de bedragen te bevestigen
 
     collected.first().react("✅");
 

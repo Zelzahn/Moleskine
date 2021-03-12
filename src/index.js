@@ -4,14 +4,22 @@ import winston, { format } from "winston";
 import { prefix, ownerid, token } from "../config.json";
 
 // Logging levels used: error, warn, info
-export const logger = winston.createLogger({
-  transports: [new winston.transports.File({ filename: "moleskine.log" })],
-  format: format.combine(
-    format.timestamp(),
-    format.align(),
-    format.printf((log) => `${log.timestamp} : [${log.level}] ${log.message}`)
-  ),
-});
+export const logger = winston.createLogger();
+
+if (process.env.NODE_ENV !== "development") {
+  logger.add(
+    new winston.transports.File({
+      filename: "moleskine.log",
+      format: format.combine(
+        format.timestamp(),
+        format.align(),
+        format.printf(
+          (log) => `${log.timestamp} : [${log.level}] ${log.message}`
+        )
+      ),
+    })
+  );
+}
 
 if (process.env.NODE_ENV !== "production") {
   logger.add(

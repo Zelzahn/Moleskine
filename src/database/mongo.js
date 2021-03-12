@@ -21,3 +21,72 @@ module.exports.getWeek = async () => {
 module.exports.setSetting = async (setting, value) => {
   Config.update({ "name": setting }, { "value": value }, { upsert: true });
 }
+
+
+module.exports.getCurrentCandidates = async () => {
+  return await Candidate.find({ "inGame": true })
+}
+
+module.exports.eliminateCandidate = async (candidate) => {
+  Candidate.updateOne({ "name": candidate }, { "inGame": false })
+}
+
+module.exports.placeBet = async (userId, guildId, candidate, amount) => {
+  const info = await getBetInfo(userId, guildId, candidate)
+  const bet = new Bet({
+    "week": info.week,
+    "amount": amount,
+    "user": info.user,
+    "candidate": info.candidate
+  })
+  bet.save()
+}
+
+module.exports.removePoints = async (userId, guildId, amount) => {
+  User.updateOne({ "guildId": guildId, "userId": userId }, { "$inc": { "remainingPoints": -amount } })
+
+}
+
+async function getUserId(userId, guildId) {
+  return await User.findOne({ "guildId": guildId, "userId": userId }, "_id")
+
+}
+
+async function getCandidateId(candidate) {
+  return await Candidate.findOne({ name: candidate }, "_id");
+}
+
+async function getBetInfo(userId, guildId, candidate) {
+  const week = await getWeek();
+  const user = await getUserId(userId, guildId);
+  const player = await getCandidateId(candidate);
+  return { week: week, user: user, candidate: player }
+}
+module.exports.placeMoleBet = async (userId, guildId, candidate) => {
+  const info = await getBetInfo(userId, guildId, candidate)
+  const moleBet = new MoleBet({
+    "user": info.user,
+    "week": info.week,
+    "mole": info.candidate
+  })
+  moleBet.save()
+
+}
+module.exports.getBet = async (userId, guildId, week, candidate) => {
+  const user = getUserId(userId, guildId);
+  const candidateId = getCandidateId(candidate)
+  return await Bet.findOne({ "user": user, "week": week, "candidate": candidateId })
+}
+
+module.exports.getUserBets = async (userId, guildId, week) => {
+  const user = getUserId(userId, guildId)
+  return await Bet.findAll({ "user": user, "week": week })
+}
+
+module.exports.getWeekBets = async (week) => {
+  return await Bet.findAll({ "week": week })
+}
+
+
+
+

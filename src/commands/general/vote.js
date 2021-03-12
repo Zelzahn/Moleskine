@@ -2,6 +2,7 @@ import { Command } from "discord.js-commando";
 import { participants } from "../../../config.json";
 import { MessageEmbed } from "discord.js";
 import { logger } from "../../index";
+import { error } from "../../utils/printError";
 
 export default class VoteCommand extends Command {
   constructor(client) {
@@ -15,7 +16,10 @@ export default class VoteCommand extends Command {
   }
 
   async run(message) {
-    logger.log("info", `${message.author.username} has used vote.`);
+    logger.log(
+      "info",
+      `${message.author.username} (${message.author.id}) has used vote.`
+    );
 
     const filter = (m) => m.author.id === message.author.id;
 
@@ -29,6 +33,7 @@ export default class VoteCommand extends Command {
       .awaitMessages(filter, {
         max: 1,
         time: 30000,
+        errors: ["time"],
       })
       .catch(() => {
         throw new Error("Timeout: You waited too long to respond.");
@@ -66,10 +71,6 @@ export default class VoteCommand extends Command {
   }
 
   onError(err, message) {
-    message.embed({
-      title: "Error",
-      description: err.message,
-      color: "#FF2400",
-    });
+    error(err, message);
   }
 }

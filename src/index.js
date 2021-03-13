@@ -3,8 +3,7 @@ import { join } from "path";
 import winston, { format } from "winston";
 import { prefix, ownerid, token } from "../config.json";
 
-// Logging levels used: error, warn, info
-export const logger = winston.createLogger();
+export const logger = winston.createLogger({ exitOnError: false });
 
 if (process.env.NODE_ENV !== "development") {
   logger.add(
@@ -25,12 +24,21 @@ if (process.env.NODE_ENV !== "production") {
   logger.add(
     new winston.transports.Console({
       format: format.combine(
-        format.timestamp(),
         format.align(),
         format.colorize(),
-        format.printf(
-          (log) => `${log.timestamp} : [${log.level}] ${log.message}`
-        )
+        format.printf((log) => {
+          const stringifiedRest = JSON.stringify(
+            Object.assign({}, log, {
+              level: undefined,
+              message: undefined,
+              splat: undefined,
+            })
+          );
+
+          if (stringifiedRest !== "{}")
+            return `[${log.level}] ${stringifiedRest}`;
+          else return `[${log.level}] ${log.message}`;
+        })
       ),
     })
   );

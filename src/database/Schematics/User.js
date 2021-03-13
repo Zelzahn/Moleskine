@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import { Schema, model } from "mongoose";
 
 // Newtypes
 const reqString = {
@@ -13,46 +13,45 @@ const week = {
 };
 
 // Schemas
-const candidateSchema = mongoose.Schema({
-  name: { type: String, unique: true, required: true, enum: [] },
+const candidateSchema = Schema({
+  name: { type: String, unique: true, required: true, enum: ["Alice", "Bob"] },
   inGame: { type: Boolean, required: true },
   emoji: reqString,
 });
 
-const userSchema = mongoose.Schema({
+const userSchema = Schema({
   guildId: reqString,
   userId: reqString,
-  remainingPoints: { type: Number, min: 0, max: 1000, default: 1000, required: true },
+  remainingPoints: {
+    type: Number,
+    min: 0,
+    max: 1000,
+    default: 1000,
+    required: true,
+  },
 });
 userSchema.index({ guilId: 1, userId: 1 }, { unique: true });
 
-const betSchema = mongoose.Schema({
+const betSchema = Schema({
   week: week,
   amount: { type: Number, required: true, min: 1, max: 1000 },
-  user: { type: mongoose.Schema.ObjectId, ref: "user", required: true },
+  user: { type: Schema.ObjectId, ref: "user", required: true },
   candidate: {
-    type: mongoose.Schema.ObjectId,
+    type: Schema.ObjectId,
     ref: "candidate",
     required: true,
   },
 });
 betSchema.index({ week: 1, user: 1, candidate: 1 }, { unique: true });
 
-const moleBetSchema = mongoose.Schema({
-  user: { type: mongoose.Schema.ObjectId, ref: "user", required: true },
+const moleBetSchema = Schema({
+  user: { type: Schema.ObjectId, ref: "user", required: true },
   week: week,
-  mole: { type: mongoose.Schema.ObjectId, ref: "candidate", required: true },
+  mole: { type: Schema.ObjectId, ref: "candidate", required: true },
 });
 moleBetSchema.index({ user: 1, week: 1 }, { unique: true });
 
-const User = mongoose.model("user", userSchema);
-const Bet = mongoose.model("bet", betSchema);
-const MoleBet = mongoose.model("molebet", moleBetSchema);
-const Candidate = mongoose.model("candidate", candidateSchema);
-
-module.exports = {
-  User: User,
-  Bet: Bet,
-  MoleBet: MoleBet,
-  Candidate: Candidate,
-};
+export const User = model("user", userSchema);
+export const Bet = model("bet", betSchema);
+export const MoleBet = model("molebet", moleBetSchema);
+export const Candidate = model("candidate", candidateSchema);

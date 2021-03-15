@@ -157,10 +157,8 @@ export const addScore = async (userId, guildId, amount) => {
 };
 
 export const getAllScores = async (guildId) => {
-  console.log(await User.find({ guildId: guildId }));
-  return await User.find({ guildId: guildId })
-    .sort({ score: "desc" })
-    .map((user) => ({ userId: user.userId, points: user.points }));
+  const users = await User.find({ guildId: guildId }).sort({ score: "desc" });
+  return users.map((user) => ({ userId: user.userId, score: user.score }));
 };
 
 export const getAllUsers = async (guildId) => {

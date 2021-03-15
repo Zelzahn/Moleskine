@@ -2,6 +2,7 @@ import { Command } from "discord.js-commando";
 import { logger } from "../../index";
 import { error } from "../../utils/printError";
 import { getAllScores } from "../../database/mongo";
+import { MessageEmbed } from "discord.js";
 
 export default class LeaderboardCommand extends Command {
   constructor(client) {
@@ -21,7 +22,23 @@ export default class LeaderboardCommand extends Command {
     );
 
     const leaderboard = await getAllScores(message.guild.id);
-    // console.log(leaderboard);
+
+    const embed = new MessageEmbed().setTitle("Leaderboard");
+
+    let description = "";
+
+    leaderboard.forEach((user, index) => {
+      const expandedUser = this.client.users.cache.get(user.userId);
+      description += `\n\`${index + 1}.${
+        index + 1 < 10 ? " " : ""
+      }\` ${expandedUser.toString()}:\t**${user.score} ${
+        user.score == 1 ? "punt" : "punten"
+      }**`;
+    });
+
+    embed.setDescription(description);
+
+    message.say(embed);
   }
 
   onError(err, message) {

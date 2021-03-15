@@ -1,5 +1,9 @@
 import { Command } from "discord.js-commando";
-import { setSetting } from "../../database/mongo";
+import {
+  getSetting,
+  setSetting,
+  getCurrentCandidates,
+} from "../../database/mongo";
 
 export default class SettingCommand extends Command {
   constructor(client) {
@@ -26,6 +30,7 @@ export default class SettingCommand extends Command {
 
   async run(message, { setting, value }) {
     const owners = await getSetting("owners");
+
     if (owners.includes(message.author.id)) {
       if (setting.toLowerCase() === "week")
         await setSetting("week", Number(value));

@@ -46,11 +46,17 @@ const getCandidateId = async (candidate) => {
   return await Candidate.findOne({ name: candidate }, "_id");
 };
 
-async function getBetInfo(userId, guildId, candidate) {
+async function getBetInfoAll(userId, guildId, candidate) {
   const week = await getWeek();
   const user = await getUserId(userId, guildId);
   const player = await getCandidateId(candidate);
   return { week: week, user: user, candidate: player };
+}
+
+async function getBetInfo(userId, guildId) {
+  const week = await getWeek();
+  const user = await getUserId(userId, guildId);
+  return { week: week, user: user };
 }
 
 // Candidate Calls
@@ -66,14 +72,18 @@ export const eliminateCandidate = async (candidate) => {
 // Betting Calls
 
 export const placeBet = async (userId, guildId, candidate, amount) => {
-  const info = await getBetInfo(userId, guildId, candidate);
+  const info = await getBetInfoAll(userId, guildId, candidate);
 
   await Bet.create({
     week: info.week,
     amount: amount,
     user: info.user,
     candidate: info.candidate,
+  }).catch((err) => {
+    throw new Error(err);
   });
+
+  await removePoints(userId, guildId, amount);
 };
 
 export const getBet = async (userId, guildId, week, candidate) => {
@@ -98,7 +108,7 @@ export const getAllBets = async () => {
 // User Calls
 
 export const removePoints = async (userId, guildId, amount) => {
-  User.updateOne(
+  await User.updateOne(
     { guildId: guildId, userId: userId },
     { $inc: { remainingPoints: -amount } }
   );
@@ -111,13 +121,14 @@ export const getPoints = async (userId, guildId) => {
 // Mole Bet Calls
 
 export const placeMoleBet = async (userId, guildId, candidate) => {
-  const info = await getBetInfo(userId, guildId, candidate);
-  const moleBet = new MoleBet({
+  const info = await getBetInfo(userId, guildId);
+  await MoleBet.create({
     user: info.user,
     week: info.week,
-    mole: info.candidate,
+    mole: candidate,
+  }).catch((error) => {
+    throw new Error(error);
   });
-  moleBet.save();
 };
 
 export const getMoleBet = async (userId, guildId, week) => {

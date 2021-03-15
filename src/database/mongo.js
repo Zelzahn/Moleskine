@@ -123,6 +123,10 @@ export const getPoints = async (userId, guildId) => {
   return 1000;
 };
 
+export const getAllPoints = async (guildId) => {
+  const users = await User.find({ guildId: guildId }).sort({ "points": "desc" }).map(user => ({ "userId": user.userId, "points": user.points }));
+  return users;
+};
 // Mole Bet Calls
 
 export const placeMoleBet = async (userId, guildId, candidate) => {

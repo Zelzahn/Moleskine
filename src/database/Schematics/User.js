@@ -10,12 +10,13 @@ const week = {
   type: Number,
   required: true,
   min: 1,
+  default: 1
 };
 
 // Schemas
 const candidateSchema = Schema({
   name: { type: String, unique: true, required: true, enum: ["Alice", "Bob"] },
-  inGame: { type: Boolean, required: true },
+  lastWeek: week,
   emoji: reqString,
 });
 
@@ -29,6 +30,7 @@ const userSchema = Schema({
     default: 1000,
     required: true,
   },
+  points: { type: Number, min: 0, default: 0, required: true }
 });
 userSchema.index({ guilId: 1, userId: 1 }, { unique: true });
 

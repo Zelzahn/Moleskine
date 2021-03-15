@@ -1,9 +1,5 @@
 import { Command } from "discord.js-commando";
-import {
-  getSetting,
-  setSetting,
-  getCurrentCandidates,
-} from "../../database/mongo";
+import { getSetting, setSetting } from "../../database/mongo";
 
 export default class SettingCommand extends Command {
   constructor(client) {
@@ -25,6 +21,7 @@ export default class SettingCommand extends Command {
         },
       ],
       memberName: "setting",
+      hidden: true,
     });
   }
 

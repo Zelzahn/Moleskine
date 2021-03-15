@@ -57,15 +57,20 @@ if (process.env.NODE_ENV !== "production") {
   client.registry
     .registerDefaultTypes()
     .registerDefaultGroups()
-    .registerGroups([["general", "General commands"]])
-    .registerGroups([["management", "Commands to manage the bot"]])
-    .registerDefaultCommands()
+    .registerGroups([
+      ["general", "General commands"],
+      ["management", "Commands to manage the bot"],
+    ])
+    // .registerDefaultCommands({
+    //   unknownCommand: false,
+    //   help: false,
+    // })
     .registerCommandsIn(join(__dirname, "commands"));
 
   client.once("ready", () => {
     logger.log("info", `Logged in as ${client.user.tag}! (${client.user.id})`);
     client.user.setPresence({
-      activity: { name: "for help", type: "WATCHING" },
+      activity: { name: "for ?help", type: "WATCHING" },
       status: "online",
     });
   });
@@ -77,5 +82,6 @@ if (process.env.NODE_ENV !== "production") {
 
   client.login(token);
 })().catch((e) => {
+  console.log(e);
   logger.log("error", e);
 });

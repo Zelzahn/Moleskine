@@ -6,8 +6,8 @@ import {
   getPoints,
   getCurrentCandidates,
   placeBet,
-  getSetting,
   placeMoleBet,
+  getMoleBet,
 } from "../../database/mongo";
 
 export default class VoteCommand extends Command {
@@ -87,23 +87,43 @@ export default class VoteCommand extends Command {
 
     this.succesfullyProcessed(collected.first());
 
+    if (await getMoleBet(userId, guildId)) {
+      const said = await message.say(
+        "You already selected who you think the mole is for this week."
+      );
+      said.delete({ timeout: this.deleteTime });
+      return;
+    }
+
     let moleEmbded = new MessageEmbed().setTitle(
       "Wie is de mol? (volgens jou)"
     );
 
-    // TODO: Split this up in 2 fields to make the message more compact
-    let description = "";
-    for (const participant of participants) {
-      description += `\n\n${participant.emoji}: ${participant.name}`;
+    if (participants.length > 6) {
+      let left = "";
+      let right = "";
+      for (let index = 0; index < participants.length; index++) {
+        const participant = participants[index];
+
+        if (index > participants.length / 2)
+          right += `\n\n${participant.emoji}: ${participant.name}`;
+        else left += `\n\n${participant.emoji}: ${participant.name}`;
+      }
+
+      moleEmbded.addField("\u200B", left, true);
+      moleEmbded.addField("\u200B", right, true);
+    } else {
+      let description = "";
+      for (const participant of participants) {
+        description += `\n\n${participant.emoji}: ${participant.name}`;
+      }
+      moleEmbded.setDescription(description);
     }
-    moleEmbded.setDescription(description);
 
     // This errors
     // for (const participant of participants) {
     //   moleEmbded.addField(" ", `${participant.emoji}: ${participant.name}`);
     // }
-
-    // TODO: Skip this part if the user already placed a moleEmbet
 
     moleEmbded = await message.embed(moleEmbded);
     participants.forEach(async ({ emoji }) => await moleEmbded.react(emoji));

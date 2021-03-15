@@ -131,8 +131,9 @@ export const placeMoleBet = async (userId, guildId, candidate) => {
   });
 };
 
-export const getMoleBet = async (userId, guildId, week) => {
-  const user = getUserId(userId, guildId);
+export const getMoleBet = async (userId, guildId) => {
+  const user = await getUserId(userId, guildId);
+  const week = await getWeek();
   return await MoleBet.findOne({ user: user, week: week });
 };
 

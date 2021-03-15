@@ -12,14 +12,14 @@ import {
 import { error } from '../../utils/printError';
 
 
-export default class SettingCommand extends Command {
+export default class NextWeekCommand extends Command {
     constructor(client) {
         super(client, {
             name: "nextweek",
             aliases: ["next"],
             group: "management",
             description: "Eliminate a candidate and go to the next week",
-            memberName: "vote",
+            memberName: "nextweek",
             args: [{
                 key: "candidate",
                 prompt: "Please provide a candidate to eliminate",
@@ -42,7 +42,7 @@ export default class SettingCommand extends Command {
                     const bets = await getUserBets(user.userId, user.guildId, week);
                     let count = 0;
                     for (let bet of bets) {
-                        if (bet.candidate !== effectiveC._id) {
+                        if (!bet.candidate.equals(effectiveC._id)) {
                             count += bet.amount;
                         }
                     }

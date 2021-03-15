@@ -189,6 +189,11 @@ export const getMoleBet = async (userId, guildId) => {
   return await MoleBet.findOne({ user: user, week: week });
 };
 
+export const getMoleBets = async (userId, guildId) => {
+  const user = await getUserId(userId, guildId);
+  return await MoleBet.find({ user }).catch(err => console.log(err));
+};
+
 export const getWeekMoleBets = async (week) => {
   return await MoleBet.find({ week: week });
 };

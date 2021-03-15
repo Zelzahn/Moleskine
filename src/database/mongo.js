@@ -69,9 +69,13 @@ export const getCurrentCandidates = async () => {
 
 export const eliminateCandidate = async (candidate) => {
   const week = await getWeek();
-  Candidate.updateOne(
-    { name: candidate, lastWeek: week },
+  await Candidate.updateMany(
+    { name: { $ne: candidate }, lastWeek: week },
     { lastWeek: week + 1 }
+  );
+  await Config.updateOne(
+    { name: "week" },
+    { $inc: { value: 1 } }
   );
 };
 
@@ -101,15 +105,15 @@ export const getBet = async (userId, guildId, week, candidate) => {
 
 export const getUserBets = async (userId, guildId, week) => {
   const user = await getUserId(userId, guildId);
-  return await Bet.findAll({ user: user, week: week });
+  return await Bet.find({ user, week });
 };
 
 export const getWeekBets = async (week) => {
-  return await Bet.findAll({ week: week });
+  return await Bet.find({ week: week });
 };
 
 export const getAllBets = async () => {
-  return await Bet.findAll();
+  return await Bet.find();
 };
 
 // User Calls
@@ -121,11 +125,16 @@ export const removeRemainingPoints = async (userId, guildId, amount) => {
   );
 };
 
+export const resetRemainingPoints = async (userId, guildId) => {
+  await User.updateOne({ guildId, userId }, { remainingPoints: 1000 });
+};
+
 export const getRemainingPoints = async (userId, guildId) => {
   const user = await User.findOne(
     { userId: userId, guildId: guildId },
     "remainingPoints"
   );
+  console.log(user);
   if (user !== null) return user.remainingPoints;
   return 1000;
 };
@@ -153,6 +162,10 @@ export const getAllScores = async (guildId) => {
     .sort({ score: "desc" })
     .map((user) => ({ userId: user.userId, points: user.points }));
 };
+
+export const getAllUsers = async (guildId) => {
+  return await User.find();
+};
 // Mole Bet Calls
 
 export const placeMoleBet = async (userId, guildId, candidate) => {
@@ -179,7 +192,7 @@ export const getMoleBet = async (userId, guildId) => {
 };
 
 export const getWeekMoleBets = async (week) => {
-  return await MoleBet.findAll({ week: week });
+  return await MoleBet.find({ week: week });
 };
 
 export const getMoleBetsByCandidate = async (userId, guildId, candidate) => {
@@ -189,5 +202,5 @@ export const getMoleBetsByCandidate = async (userId, guildId, candidate) => {
 };
 
 export const getAllMoleBets = async () => {
-  return await MoleBet.findAll();
+  return await MoleBet.find();
 };

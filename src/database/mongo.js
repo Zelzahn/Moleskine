@@ -115,7 +115,12 @@ export const removePoints = async (userId, guildId, amount) => {
 };
 
 export const getPoints = async (userId, guildId) => {
-  await User.findOne({ userId: userId, guildId: guildId }, "remainingPoints");
+  const user = await User.findOne(
+    { userId: userId, guildId: guildId },
+    "remainingPoints"
+  );
+  if (user) return user.remainingPoints;
+  return 1000;
 };
 
 // Mole Bet Calls
@@ -129,6 +134,12 @@ export const placeMoleBet = async (userId, guildId, candidate) => {
   }).catch((error) => {
     throw new Error(error);
   });
+};
+
+export const existsMoleBet = async (userId, guildId) => {
+  const user = await getUserId(userId, guildId);
+  const week = await getWeek();
+  return await MoleBet.exists({ user: user, week: week });
 };
 
 export const getMoleBet = async (userId, guildId) => {

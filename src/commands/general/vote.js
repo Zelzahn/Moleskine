@@ -7,7 +7,7 @@ import {
   getCurrentCandidates,
   placeBet,
   placeMoleBet,
-  getMoleBet,
+  existsMoleBet,
 } from "../../database/mongo";
 
 export default class VoteCommand extends Command {
@@ -20,13 +20,11 @@ export default class VoteCommand extends Command {
       description: "Cast your weekly vote",
     });
 
-    this.waitingTime = 30000;
-    this.deleteTime = 3000;
+    this.waitingTime = 5000;
+    this.deleteTime = 10000;
   }
 
   async run(message) {
-    message.delete({ timeout: this.deleteTime * 2 });
-
     const userId = message.author.id;
     const guildId = message.guild.id;
 
@@ -41,8 +39,6 @@ export default class VoteCommand extends Command {
         "Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200",
     });
 
-    survivorEmbed.delete({ timeout: this.deleteTime });
-
     const filter = (m) => m.author.id === message.author.id;
     let collected = await message.channel
       .awaitMessages(filter, {
@@ -51,8 +47,12 @@ export default class VoteCommand extends Command {
         errors: ["time"],
       })
       .catch(() => {
+        message.delete();
+        survivorEmbed.delete();
         throw new Error("Timeout: You waited too long to respond.");
       });
+
+    // survivorEmbed.delete();
 
     let persons = collected
       .first()
@@ -72,7 +72,7 @@ export default class VoteCommand extends Command {
       throw new Error("You can not give negative points.");
 
     const score = persons.reduce((a, [_, b]) => a + b, 0);
-    const current_score = (await getPoints(userId, guildId)) || 1000;
+    const current_score = await getPoints(userId, guildId);
     if (score > current_score)
       throw new Error(
         `You can not spend more points than you currently have. (You have: ${current_score})`
@@ -87,7 +87,7 @@ export default class VoteCommand extends Command {
 
     this.succesfullyProcessed(collected.first());
 
-    if (await getMoleBet(userId, guildId)) {
+    if (await existsMoleBet(userId, guildId)) {
       const said = await message.say(
         "You already selected who you think the mole is for this week."
       );
@@ -153,6 +153,8 @@ export default class VoteCommand extends Command {
       );
 
     this.succesfullyProcessed(moleEmbded);
+
+    // message.delete();
   }
 
   onError(err, message) {
@@ -161,6 +163,6 @@ export default class VoteCommand extends Command {
 
   succesfullyProcessed(message) {
     message.react("✅");
-    message.delete({ timeout: this.deleteTime });
+    // message.delete({ timeout: this.deleteTime });
   }
 }

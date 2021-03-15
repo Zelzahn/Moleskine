@@ -36,9 +36,10 @@ export const setSetting = async (setting, value) => {
 // Help Functions
 
 const getUserId = async (userId, guildId) => {
-  const user = await User.findOne({ guildId: guildId, userId: userId }, "_id");
-  if (user === null)
-    return await User.create({ guildId: guildId, userId: userId });
+  const user = await User.findOne({ guildId, userId }, "_id");
+  if (user === null) {
+    return await User.create({ guildId, userId });
+  }
   return user;
 };
 
@@ -68,7 +69,10 @@ export const getCurrentCandidates = async () => {
 
 export const eliminateCandidate = async (candidate) => {
   const week = await getWeek();
-  Candidate.updateOne({ name: candidate, lastWeek: week }, { lastWeek: week + 1 });
+  Candidate.updateOne(
+    { name: candidate, lastWeek: week },
+    { lastWeek: week + 1 }
+  );
 };
 
 // Betting Calls
@@ -82,10 +86,11 @@ export const placeBet = async (userId, guildId, candidate, amount) => {
     user: info.user,
     candidate: info.candidate,
   }).catch((err) => {
+    // console.log(err);
     throw new Error(err);
   });
 
-  await removePoints(userId, guildId, amount);
+  await removeRemainingPoints(userId, guildId, amount);
 };
 
 export const getBet = async (userId, guildId, week, candidate) => {
@@ -121,31 +126,32 @@ export const getRemainingPoints = async (userId, guildId) => {
     { userId: userId, guildId: guildId },
     "remainingPoints"
   );
-  if (user) return user.remainingPoints;
+  if (user.remainingPoints) return user.remainingPoints;
   return 1000;
 };
 
-export const getPoints = async (userId, guildId) => {
+export const getScore = async (userId, guildId) => {
   const user = await User.findOne(
     { userId: userId, guildId: guildId },
-    "points"
+    "score"
   );
   if (user) return user.points;
   return 0;
 };
 
-export const addPoints = async (userId, guildId, amount) => {
+export const addScore = async (userId, guildId, amount) => {
   await User.updateOne(
     { guildId: guildId, userId: userId },
-    { $inc: { points: amount } },
+    { $inc: { score: amount } },
     { upsert: true, setDefaultsOnInsert: true }
   );
 };
 
-
-export const getAllPoints = async (guildId) => {
-  return await User.find({ guildId: guildId }).sort({ "points": "desc" }).map(user => ({ "userId": user.userId, "points": user.points }));
-
+export const getAllScores = async (guildId) => {
+  console.log(await User.find({ guildId: guildId }));
+  return await User.find({ guildId: guildId })
+    .sort({ score: "desc" })
+    .map((user) => ({ userId: user.userId, points: user.points }));
 };
 // Mole Bet Calls
 
@@ -176,10 +182,10 @@ export const getWeekMoleBets = async (week) => {
   return await MoleBet.findAll({ week: week });
 };
 
-export const getMoleBetsByCandidat = async (userId, guildId, candidate) => {
+export const getMoleBetsByCandidate = async (userId, guildId, candidate) => {
   const user = await getUserId(userId, guildId);
-  const candidate = await getCandidateId(candidate);
-  return await MoleBet.find({ user: user, mole: candidate });
+  const candidateExpanded = await getCandidateId(candidate);
+  return await MoleBet.find({ user: user, mole: candidateExpanded });
 };
 
 export const getAllMoleBets = async () => {

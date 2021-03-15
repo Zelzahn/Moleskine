@@ -3,7 +3,7 @@ import { MessageEmbed } from "discord.js";
 import { logger } from "../../index";
 import { error } from "../../utils/printError";
 import {
-  getPoints,
+  getRemainingPoints,
   getCurrentCandidates,
   placeBet,
   placeMoleBet,
@@ -20,7 +20,7 @@ export default class VoteCommand extends Command {
       description: "Cast your weekly vote",
     });
 
-    this.waitingTime = 5000;
+    this.waitingTime = 30000;
     this.deleteTime = 10000;
   }
 
@@ -72,14 +72,15 @@ export default class VoteCommand extends Command {
       throw new Error("You can not give negative points.");
 
     const score = persons.reduce((a, [_, b]) => a + b, 0);
-    const current_score = await getPoints(userId, guildId);
+    const current_score = await getRemainingPoints(userId, guildId);
     if (score > current_score)
       throw new Error(
         `You can not spend more points than you currently have. (You have: ${current_score})`
       );
 
     for (const [p, val] of persons) {
-      await placeBet(userId, guildId, p, val).catch(() => {
+      await placeBet(userId, guildId, p, val).catch((err) => {
+        // console.log(err);
         collected.first().react("❌");
         throw new Error(`You have already voted for ${p}.`);
       });

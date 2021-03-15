@@ -1,9 +1,5 @@
 {
   "token": "YOUR_TOKEN_GOES_HERE",
-  "prefix": "?",
   "mongoDB": "MONGODB_URL_GOES_HERE",
-  "color": "#FCE8C3",
-  "adminRole": "TODO",
-  "ownerid": "YOUR_ID_GOES_HERE",
   "participants": ["Alice", "Bob", "Carol"]
 }

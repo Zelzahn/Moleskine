@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import { participants } from "../../../config";
 
 // Newtypes
 const reqString = {
@@ -14,7 +15,7 @@ const week = {
 
 // Schemas
 const candidateSchema = Schema({
-  name: { type: String, unique: true, required: true, enum: ["Alice", "Bob"] },
+  name: { type: String, unique: true, required: true, enum: participants },
   inGame: { type: Boolean, required: true },
   emoji: reqString,
 });

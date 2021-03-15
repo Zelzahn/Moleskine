@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { mongoDB } from "../../config.json";
+import { mongoDB } from "../../config";
 import Config from "./Schematics/Config";
 import { Candidate, User, MoleBet, Bet } from "./Schematics/User";
 import { logger } from "../index";

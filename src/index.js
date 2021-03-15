@@ -1,7 +1,8 @@
 import { CommandoClient } from "discord.js-commando";
 import { join } from "path";
 import winston, { format } from "winston";
-import { prefix, ownerid, token } from "../config.json";
+import { token } from "../config";
+import { getSetting } from "./database/mongo";
 
 export const logger = winston.createLogger({ exitOnError: false });
 
@@ -44,30 +45,37 @@ if (process.env.NODE_ENV !== "production") {
   );
 }
 
-const client = new CommandoClient({
-  commandPrefix: prefix,
-  owner: ownerid,
-});
+(async () => {
+  const prefix = await getSetting("prefix");
+  const owners = await getSetting("owners");
 
-client.registry
-  .registerDefaultTypes()
-  .registerDefaultGroups()
-  .registerGroups([["general", "General commands"]])
-  .registerGroups([["management", "Commands to manage the bot"]])
-  .registerDefaultCommands()
-  .registerCommandsIn(join(__dirname, "commands"));
-
-client.once("ready", () => {
-  logger.log("info", `Logged in as ${client.user.tag}! (${client.user.id})`);
-  client.user.setPresence({
-    activity: { name: "for help", type: "WATCHING" },
-    status: "online",
+  const client = new CommandoClient({
+    commandPrefix: prefix,
+    owner: owners,
   });
+
+  client.registry
+    .registerDefaultTypes()
+    .registerDefaultGroups()
+    .registerGroups([["general", "General commands"]])
+    .registerGroups([["management", "Commands to manage the bot"]])
+    .registerDefaultCommands()
+    .registerCommandsIn(join(__dirname, "commands"));
+
+  client.once("ready", () => {
+    logger.log("info", `Logged in as ${client.user.tag}! (${client.user.id})`);
+    client.user.setPresence({
+      activity: { name: "for help", type: "WATCHING" },
+      status: "online",
+    });
+  });
+
+  client.on("warn", (m) => logger.log("warn", m));
+  client.on("error", (m) => logger.log("error", m));
+
+  process.on("uncaughtException", (error) => logger.log("error", error));
+
+  client.login(token);
+})().catch((e) => {
+  logger.log("error", e);
 });
-
-client.on("warn", (m) => logger.log("warn", m));
-client.on("error", (m) => logger.log("error", m));
-
-process.on("uncaughtException", (error) => logger.log("error", error));
-
-client.login(token);

@@ -33,7 +33,7 @@ const userSchema = Schema({
   },
   score: { type: Number, min: 0, default: 0, required: true },
 });
-userSchema.index({ guilId: 1, userId: 1 }, { unique: true });
+userSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
 const betSchema = Schema({
   week: week,

@@ -126,7 +126,7 @@ export const getRemainingPoints = async (userId, guildId) => {
     { userId: userId, guildId: guildId },
     "remainingPoints"
   );
-  if (user.remainingPoints) return user.remainingPoints;
+  if (user !== null) return user.remainingPoints;
   return 1000;
 };
 

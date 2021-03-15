@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm-run-all clean transpile",
     "server": "node ./dist/index.js",
-    "dev": "NODE_ENV=development npm-run-all build server",
+    "dev": "npm-run-all build server",
     "transpile": "babel ./src --out-dir dist",
     "clean": "rimraf dist",
     "watch:dev": "nodemon"
@@ -19,29 +19,6 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Zelzahn/Moleskine/issues"
-  },
-  "babel": {
-    "presets": [
-      [
-        "@babel/preset-env",
-        {
-          "targets": {
-            "node": "current"
-          }
-        }
-      ]
-    ]
-  },
-  "nodemonConfig": {
-    "exec": "npm run dev",
-    "watch": [
-      "src/*"
-    ],
-    "ignore": [
-      "**/__tests__/**",
-      "*.test.js",
-      "*.spec.js"
-    ]
   },
   "homepage": "https://github.com/Zelzahn/Moleskine#readme",
   "dependencies": {

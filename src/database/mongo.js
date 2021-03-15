@@ -62,11 +62,13 @@ async function getBetInfo(userId, guildId) {
 // Candidate Calls
 
 export const getCurrentCandidates = async () => {
-  return await Candidate.find({ inGame: true });
+  const week = await getWeek();
+  return await Candidate.find({ lastWeek: week });
 };
 
 export const eliminateCandidate = async (candidate) => {
-  Candidate.updateOne({ name: candidate }, { inGame: false });
+  const week = await getWeek();
+  Candidate.updateOne({ name: candidate, lastWeek: week }, { lastWeek: week + 1 });
 };
 
 // Betting Calls
@@ -107,14 +109,14 @@ export const getAllBets = async () => {
 
 // User Calls
 
-export const removePoints = async (userId, guildId, amount) => {
+export const removeRemainingPoints = async (userId, guildId, amount) => {
   await User.updateOne(
     { guildId: guildId, userId: userId },
     { $inc: { remainingPoints: -amount } }
   );
 };
 
-export const getPoints = async (userId, guildId) => {
+export const getRemainingPoints = async (userId, guildId) => {
   const user = await User.findOne(
     { userId: userId, guildId: guildId },
     "remainingPoints"
@@ -123,9 +125,27 @@ export const getPoints = async (userId, guildId) => {
   return 1000;
 };
 
+export const getPoints = async (userId, guildId) => {
+  const user = await User.findOne(
+    { userId: userId, guildId: guildId },
+    "points"
+  );
+  if (user) return user.points;
+  return 0;
+};
+
+export const addPoints = async (userId, guildId, amount) => {
+  await User.updateOne(
+    { guildId: guildId, userId: userId },
+    { $inc: { points: amount } },
+    { upsert: true, setDefaultsOnInsert: true }
+  );
+};
+
+
 export const getAllPoints = async (guildId) => {
-  const users = await User.find({ guildId: guildId }).sort({ "points": "desc" }).map(user => ({ "userId": user.userId, "points": user.points }));
-  return users;
+  return await User.find({ guildId: guildId }).sort({ "points": "desc" }).map(user => ({ "userId": user.userId, "points": user.points }));
+
 };
 // Mole Bet Calls
 
@@ -154,6 +174,12 @@ export const getMoleBet = async (userId, guildId) => {
 
 export const getWeekMoleBets = async (week) => {
   return await MoleBet.findAll({ week: week });
+};
+
+export const getMoleBetsByCandidat = async (userId, guildId, candidate) => {
+  const user = await getUserId(userId, guildId);
+  const candidate = await getCandidateId(candidate);
+  return await MoleBet.find({ user: user, mole: candidate });
 };
 
 export const getAllMoleBets = async () => {

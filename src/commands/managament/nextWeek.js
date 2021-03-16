@@ -1,4 +1,5 @@
 import { Command } from "discord.js-commando";
+import { MessageEmbed } from "discord.js";
 import {
     getSetting,
     getCurrentCandidates,

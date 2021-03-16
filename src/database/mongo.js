@@ -91,6 +91,10 @@ export const eliminateCandidate = async (candidate) => {
   );
 };
 
+export const getCandidates = async () => {
+  return await Candidate.find();
+};
+
 // Betting Calls
 
 export const placeBet = async (userId, guildId, candidate, amount) => {

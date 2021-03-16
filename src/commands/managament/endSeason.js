@@ -68,7 +68,6 @@ export default class EndSeasonCommand extends Command {
                             break;
                         }
                     }
-
                     const added = count + 500 * correctAmount + 100 * streak;
                     await addScore(user.userId, user.guildId, added);
                 });

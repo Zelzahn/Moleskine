@@ -95,7 +95,10 @@ ${groups
     (grp) =>
       `${grp.commands
         .filter((cmd) => !cmd.hidden && (showAll || cmd.isUsable(msg)))
-        .map((cmd) => `**${cmd.name}:** ${cmd.description}`)
+        .map(
+          (cmd) =>
+            `**${msg.guild.commandPrefix}${cmd.name}**: ${cmd.description}`
+        )
         .join("\n")}`
   )}`,
           { split: true }

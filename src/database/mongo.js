@@ -103,7 +103,6 @@ export const placeBet = async (userId, guildId, candidate, amount) => {
     user: info.user,
     candidate: info.candidate,
   }).catch((err) => {
-    // console.log(err);
     throw new Error(err);
   });
 
@@ -204,7 +203,7 @@ export const getMoleBet = async (userId, guildId) => {
 
 export const getMoleBets = async (userId, guildId) => {
   const user = await getUserId(userId, guildId);
-  return await MoleBet.find({ user }).catch(err => console.log(err));
+  return await MoleBet.find({ user }).catch((err) => console.log(err));
 };
 
 export const getWeekMoleBets = async (week) => {

@@ -22,7 +22,7 @@ export default class VoteCommand extends Command {
         "Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200",
     });
 
-    this.waitingTime = 30000;
+    this.waitingTime = 60000;
     this.deleteTime = 10000;
   }
 
@@ -83,6 +83,7 @@ export default class VoteCommand extends Command {
 
     for (const [p, val] of persons) {
       await placeBet(userId, guildId, p, val).catch((err) => {
+        console.log(err);
         collected.first().react("❌");
         throw new Error(`You have already voted for ${p}.`);
       });

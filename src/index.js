@@ -11,11 +11,20 @@ if (process.env.NODE_ENV !== "development") {
     new winston.transports.File({
       filename: "moleskine.log",
       format: format.combine(
-        format.timestamp(),
         format.align(),
-        format.printf(
-          (log) => `${log.timestamp} : [${log.level}] ${log.message}`
-        )
+        format.printf((log) => {
+          const stringifiedRest = JSON.stringify(
+            Object.assign({}, log, {
+              level: undefined,
+              message: undefined,
+              splat: undefined,
+            })
+          );
+
+          if (stringifiedRest !== "{}")
+            return `[${log.level}] ${stringifiedRest}`;
+          else return `[${log.level}] ${log.message}`;
+        })
       ),
     })
   );

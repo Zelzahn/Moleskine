@@ -7,6 +7,7 @@
     "build": "npm-run-all clean transpile",
     "server": "node ./dist/index.js",
     "dev": "npm-run-all build server",
+    "prod": "NODE_ENV=production npm-run-all build server",
     "transpile": "babel ./src --out-dir dist",
     "clean": "rimraf dist",
     "watch:dev": "nodemon"

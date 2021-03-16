@@ -19,6 +19,7 @@ export default class NextWeekCommand extends Command {
       name: "nextweek",
       aliases: ["next"],
       group: "management",
+      hidden: true,
       description: "Eliminate a candidate and go to the next week",
       memberName: "nextweek",
       args: [

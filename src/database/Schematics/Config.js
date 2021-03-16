@@ -5,4 +5,12 @@ const configSchema = Schema({
   value: { type: Schema.Types.Mixed, required: true },
 });
 
-export default model("config", configSchema);
+const channelSchema = Schema({
+  guildId: { type: String, required: true },
+  channelId: { type: String, required: true }
+});
+
+channelSchema.index({ guildId: 1, channelId: 1 }, { unqiue: true });
+export const Config = model("config", configSchema);
+export const Channel = model("channel", channelSchema);
+

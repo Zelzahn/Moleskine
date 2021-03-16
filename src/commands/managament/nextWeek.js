@@ -7,7 +7,8 @@ import {
     getWeek,
     getUserBets,
     addScore,
-    resetRemainingPoints
+    resetRemainingPoints,
+    getAllChannels
 } from '../../database/mongo';
 import { error } from '../../utils/printError';
 
@@ -53,6 +54,14 @@ export default class NextWeekCommand extends Command {
                 await eliminateCandidate(candidate.toLowerCase());
                 message.react("✅");
                 // Notify all servers ?
+                const channels = await getAllChannels();
+                channels.forEach(async channel => {
+                    ch = this.client.channels.get(channel.channelId);
+                    let embed = new MessageEmbed().setTitle(
+                        "De Mol: Nieuwe Week"
+                    ).setDescription(`${candidate} was geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`);
+                    ch.embed(embed);
+                });
             } else {
                 throw new Error(`${candidate} is not a candidate or not in the game anymore`);
             }

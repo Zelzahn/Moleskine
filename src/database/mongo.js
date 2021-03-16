@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { mongoDB } from "../../config";
-import Config from "./Schematics/Config";
+import { Config, Channel } from "./Schematics/Config";
 import { Candidate, User, MoleBet, Bet } from "./Schematics/User";
 import { logger } from "../index";
 
@@ -31,6 +31,18 @@ export const getWeek = async () => {
 export const setSetting = async (setting, value) => {
   logger.log("warn", `${setting} has been changed to ${value}`);
   await Config.updateOne({ name: setting }, { value: value }, { upsert: true });
+};
+
+export const getChannel = async (guildId) => {
+  return await Channel.findOne({ guildId });
+};
+
+export const setChannel = async (guildId, channelId) => {
+  await Channel.updateOne({ guildId }, { channelId }, { upsert: true });
+};
+
+export const getAllChannels = async () => {
+  return await Channel.find();
 };
 
 // Help Functions

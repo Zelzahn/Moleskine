@@ -56,7 +56,7 @@ const getUserId = async (userId, guildId) => {
 };
 
 const getCandidateId = async (candidate) => {
-  return await Candidate.findOne({ name: candidate }, "_id");
+  return await Candidate.findOne({ name: { $regex: new RegExp("^" + candidate + "$", "i") } }, "_id");
 };
 
 async function getBetInfoAll(userId, guildId, candidate) {

@@ -1,4 +1,5 @@
 import { Command } from "discord.js-commando";
+import { MessageEmbed } from "discord.js";
 import {
   getSetting,
   getCurrentCandidates,
@@ -8,18 +9,18 @@ import {
   getUserBets,
   addScore,
   resetRemainingPoints,
+  getAllChannels,
 } from "../../database/mongo";
 import { error } from "../../utils/printError";
 
-export default class SettingCommand extends Command {
+export default class NextWeekCommand extends Command {
   constructor(client) {
     super(client, {
       name: "nextweek",
       aliases: ["next"],
       group: "management",
       description: "Eliminate a candidate and go to the next week",
-      memberName: "vote",
-      hidden: true,
+      memberName: "nextweek",
       args: [
         {
           key: "candidate",
@@ -49,7 +50,7 @@ export default class SettingCommand extends Command {
           const bets = await getUserBets(user.userId, user.guildId, week);
           let count = 0;
           for (let bet of bets) {
-            if (bet.candidate !== effectiveC._id) {
+            if (!bet.candidate.equals(effectiveC._id)) {
               count += bet.amount;
             }
           }
@@ -60,12 +61,24 @@ export default class SettingCommand extends Command {
         await eliminateCandidate(candidate.toLowerCase());
         message.react("✅");
         // Notify all servers ?
+        const channels = await getAllChannels();
+        channels.forEach(async (channel) => {
+          ch = this.client.channels.get(channel.channelId);
+          let embed = new MessageEmbed()
+            .setTitle("De Mol: Nieuwe Week")
+            .setDescription(
+              `${candidate} was geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
+            );
+          ch.embed(embed);
+        });
       } else {
         throw new Error(
           `${candidate} is not a candidate or not in the game anymore`
         );
       }
     }
+    await addScore(user.userId, user.guildId, count);
+    await resetRemainingPoints(user.userId, user.guildId);
   }
 
   onError(err, message) {

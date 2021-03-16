@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { mongoDB } from "../../config";
-import Config from "./Schematics/Config";
+import { Config, Channel } from "./Schematics/Config";
 import { Candidate, User, MoleBet, Bet } from "./Schematics/User";
 import { logger } from "../index";
 
@@ -31,6 +31,18 @@ export const getWeek = async () => {
 export const setSetting = async (setting, value) => {
   logger.log("warn", `${setting} has been changed to ${value}`);
   await Config.updateOne({ name: setting }, { value: value }, { upsert: true });
+};
+
+export const getChannel = async (guildId) => {
+  return await Channel.findOne({ guildId });
+};
+
+export const setChannel = async (guildId, channelId) => {
+  await Channel.updateOne({ guildId }, { channelId }, { upsert: true });
+};
+
+export const getAllChannels = async () => {
+  return await Channel.find();
 };
 
 // Help Functions
@@ -74,6 +86,10 @@ export const eliminateCandidate = async (candidate) => {
     { lastWeek: week + 1 }
   );
   await Config.updateOne({ name: "week" }, { $inc: { value: 1 } });
+};
+
+export const getCandidates = async () => {
+  return await Candidate.find();
 };
 
 // Betting Calls
@@ -184,6 +200,11 @@ export const getMoleBet = async (userId, guildId) => {
   const user = await getUserId(userId, guildId);
   const week = await getWeek();
   return await MoleBet.findOne({ user: user, week: week });
+};
+
+export const getMoleBets = async (userId, guildId) => {
+  const user = await getUserId(userId, guildId);
+  return await MoleBet.find({ user }).catch(err => console.log(err));
 };
 
 export const getWeekMoleBets = async (week) => {

@@ -18,6 +18,8 @@ export default class VoteCommand extends Command {
       group: "general",
       memberName: "vote",
       description: "Cast your weekly vote",
+      details:
+        "Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200",
     });
 
     this.waitingTime = 30000;
@@ -27,6 +29,9 @@ export default class VoteCommand extends Command {
   async run(message) {
     const userId = message.author.id;
     const guildId = message.guild.id;
+    const participants = await getCurrentCandidates();
+    let names = participants.map((p) => p.name);
+    names = names.join(", ");
 
     logger.log(
       "info",
@@ -35,8 +40,7 @@ export default class VoteCommand extends Command {
 
     const survivorEmbed = await message.embed({
       title: "Wie denk je dat er allemaal de aflevering zal overleven?",
-      description:
-        "Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200",
+      description: `Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200\nMogelijke deelnemers zijn: ${names}`,
     });
 
     const filter = (m) => m.author.id === message.author.id;
@@ -60,7 +64,6 @@ export default class VoteCommand extends Command {
       .map((person) => person.split(":"))
       .map(([p, v]) => [p.toLowerCase(), Number(v)]);
 
-    const participants = await getCurrentCandidates();
     const selectedParticipants = participants.filter((p) =>
       persons.some(([person, _]) => p.name.toLowerCase() == person)
     );
@@ -80,7 +83,6 @@ export default class VoteCommand extends Command {
 
     for (const [p, val] of persons) {
       await placeBet(userId, guildId, p, val).catch((err) => {
-        // console.log(err);
         collected.first().react("❌");
         throw new Error(`You have already voted for ${p}.`);
       });
@@ -139,11 +141,16 @@ export default class VoteCommand extends Command {
         throw new Error("Timeout: You waited too long to respond.");
       });
 
-    const collectedArr = Array.from(collected);
-    let ctr = 0;
-    while (participants[ctr].emoji != collectedArr[ctr][0]) ctr++;
+    const collectedArr = Array.from(collected).filter((c) => c[1].count > 1);
 
-    if (ctr < participants.length && collectedArr[ctr][1].count > 1)
+    let ctr = 0;
+    while (
+      ctr < participants.length &&
+      participants[ctr].emoji !== collectedArr[0][0]
+    )
+      ctr++;
+
+    if (ctr < participants.length)
       await placeMoleBet(userId, guildId, participants[ctr]).catch((error) => {
         moleEmbded.react("❌");
         throw new Error(error);

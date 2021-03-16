@@ -73,10 +73,7 @@ export const eliminateCandidate = async (candidate) => {
     { name: { $ne: candidate }, lastWeek: week },
     { lastWeek: week + 1 }
   );
-  await Config.updateOne(
-    { name: "week" },
-    { $inc: { value: 1 } }
-  );
+  await Config.updateOne({ name: "week" }, { $inc: { value: 1 } });
 };
 
 // Betting Calls
@@ -134,7 +131,7 @@ export const getRemainingPoints = async (userId, guildId) => {
     { userId: userId, guildId: guildId },
     "remainingPoints"
   );
-  console.log(user);
+
   if (user !== null) return user.remainingPoints;
   return 1000;
 };

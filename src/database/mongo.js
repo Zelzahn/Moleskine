@@ -56,7 +56,10 @@ const getUserId = async (userId, guildId) => {
 };
 
 const getCandidateId = async (candidate) => {
-  return await Candidate.findOne({ name: { $regex: new RegExp("^" + candidate + "$", "i") } }, "_id");
+  return await Candidate.findOne(
+    { name: { $regex: new RegExp("^" + candidate + "$", "i") } },
+    "_id"
+  );
 };
 
 async function getBetInfoAll(userId, guildId, candidate) {
@@ -97,13 +100,16 @@ export const getCandidates = async () => {
 export const placeBet = async (userId, guildId, candidate, amount) => {
   const info = await getBetInfoAll(userId, guildId, candidate);
 
-  await Bet.create({
-    week: info.week,
-    amount: amount,
-    user: info.user,
-    candidate: info.candidate,
-  }).catch((err) => {
-    throw new Error(err);
+  await Bet.updateOne(
+    {
+      week: info.week,
+      user: info.user,
+      candidate: info.candidate,
+    },
+    { $inc: { amount: amount } },
+    { upsert: true }
+  ).catch((err) => {
+    throw new Error(err.name);
   });
 
   await removeRemainingPoints(userId, guildId, amount);

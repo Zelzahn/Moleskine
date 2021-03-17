@@ -26,41 +26,67 @@ export default class VoteCommand extends Command {
     this.deleteTime = 10000;
   }
 
-  async run(message) {
+  async run(message, args) {
     const userId = message.author.id;
     const guildId = message.guild.id;
     const participants = await getCurrentCandidates();
-    let names = participants.map((p) => p.name);
-    names = names.join(", ");
 
-    logger.log(
-      "info",
-      `${message.author.username} (${message.author.id}) has used vote.`
-    );
+    let personsArg;
+    let collected;
+    if (args) {
+      personsArg = args;
 
-    const survivorEmbed = await message.embed({
-      title: "Wie denk je dat er allemaal de aflevering zal overleven?",
-      description: `Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200\nMogelijke deelnemers zijn: ${names}`,
-    });
+      logger.log(
+        "info",
+        `${message.author.username} (${message.author.id}) has used vote, with arguments.`
+      );
+    } else {
+      logger.log(
+        "info",
+        `${message.author.username} (${message.author.id}) has used vote, without arguments.`
+      );
 
-    const filter = (m) => m.author.id === message.author.id;
-    let collected = await message.channel
-      .awaitMessages(filter, {
-        max: 1,
-        time: this.waitingTime,
-        errors: ["time"],
-      })
-      .catch(() => {
-        message.delete();
-        survivorEmbed.delete();
-        throw new Error("Timeout: You waited too long to respond.");
+      let names = participants.map((p) => p.name);
+      names = names.join(", ");
+      const survivorEmbed = await message.embed({
+        title: "Wie denk je dat er allemaal de aflevering zal overleven?",
+        description: `Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200\nMogelijke deelnemers zijn: **${names}**`,
+        footer: {
+          text: `Gelieve in ${
+            this.waitingTime / 1000
+          } seconden te reageren. Of zeg 'cancelled' om te annuleren.`,
+        },
       });
+
+      collected = await message.channel
+        .awaitMessages((user) => user.author.id == userId, {
+          max: 1,
+          time: this.waitingTime,
+          errors: ["time"],
+        })
+        .catch(() => {
+          message.delete();
+          survivorEmbed.delete();
+          throw new Error("Timeout: You waited too long to give your bets.");
+        });
+
+      personsArg = collected.first().content;
+
+      if (["cancelled", "c", "canceled"].includes(personsArg)) {
+        this.succesfullyProcessed(collected.first());
+        logger.log(
+          "info",
+          `${message.author.username} (${message.author.id}) has cancelled their vote.`
+        );
+        return;
+      }
+    }
 
     // survivorEmbed.delete();
 
-    let persons = collected
-      .first()
-      .content.split(" ")
+    let persons = personsArg
+      .replace(/ *\: */g, ":")
+      .split(" ")
       .map((person) => person.split(":"))
       .map(([p, v]) => [p.toLowerCase(), Number(v)]);
 
@@ -83,13 +109,17 @@ export default class VoteCommand extends Command {
 
     for (const [p, val] of persons) {
       await placeBet(userId, guildId, p, val).catch((err) => {
-        console.log(err);
-        collected.first().react("❌");
-        throw new Error(`You have already voted for ${p}.`);
+        if (collected) collected.first().react("❌");
+        else message.react("❌");
+
+        if (err.message === "CastError")
+          throw new Error("Have you forgotten to put the ':'?");
+
+        throw new Error(err.message);
       });
     }
 
-    this.succesfullyProcessed(collected.first());
+    this.succesfullyProcessed(collected ? collected.first() : message);
 
     if (await existsMoleBet(userId, guildId)) {
       const said = await message.say(

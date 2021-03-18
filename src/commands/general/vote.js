@@ -67,7 +67,9 @@ export default class VoteCommand extends Command {
         .catch(() => {
           message.delete();
           survivorEmbed.delete();
-          throw new Error("Timeout: You waited too long to give your bets.");
+          throw new Error(
+            `Timeout: ${message.author.toString()}, you waited too long to give your bets.`
+          );
         });
 
       personsArg = collected.first().content;
@@ -97,14 +99,22 @@ export default class VoteCommand extends Command {
     if (selectedParticipants.length == 0)
       throw new Error("No valid participants given.");
 
-    if (persons.some(([_, val]) => val < 0))
-      throw new Error("You can not give negative points.");
+    for (const [_, val] of persons) {
+      if (val < 0) throw new Error("You can not give negative points.");
+
+      if (val < 1) throw new Error("A bet should at least be 1.");
+
+      if (!Number.isInteger(val))
+        throw new Error(
+          "Only numbers belonging to the strict natural numbers are allowed."
+        );
+    }
 
     const score = persons.reduce((a, [_, b]) => a + b, 0);
     const current_score = await getRemainingPoints(userId, guildId);
     if (score > current_score)
       throw new Error(
-        `You can not spend more points than you currently have. (You have: ${current_score})`
+        "You can not spend more points than you currently have. (You have: ${current_score})"
       );
 
     for (const [p, val] of persons) {
@@ -122,11 +132,13 @@ export default class VoteCommand extends Command {
     this.succesfullyProcessed(collected ? collected.first() : message);
 
     if (await existsMoleBet(userId, guildId)) {
-      const said = await message.say(
+      // const said = await message.say(
+      // );
+      // said.delete({ timeout: this.deleteTime });
+      // return;
+      throw new Error(
         "You already selected who you think the mole is for this week."
       );
-      said.delete({ timeout: this.deleteTime });
-      return;
     }
 
     let moleEmbded = new MessageEmbed().setTitle(
@@ -169,7 +181,7 @@ export default class VoteCommand extends Command {
         errors: ["time"],
       })
       .catch(() => {
-        throw new Error("Timeout: You waited too long to respond.");
+        throw new Error("You waited too long to respond. (Timeout)");
       });
 
     const collectedArr = Array.from(collected).filter((c) => c[1].count > 1);

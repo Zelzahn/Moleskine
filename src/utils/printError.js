@@ -7,8 +7,8 @@ export function error(err, message) {
   );
 
   message.embed({
-    title: "Error",
-    description: err.message,
-    color: "#FF2400",
+    title: "Oops!?",
+    description: message.author.toString() + " " + err.message,
+    color: "#fcc9c5",
   });
 }

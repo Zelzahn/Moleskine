@@ -1,5 +1,5 @@
 # Moleskine
-A discord bot for the popular Belgian tv show "De Mol"
+A discord bot for the popular Belgian tv show "De Mol" ([invite link](https://discord.com/api/oauth2/authorize?client_id=818578882000846898&permissions=76864&scope=bot))
 
 ## ES6
 As node doesn't support ES6 out of the box (and `type: module` not a clean solution is) this bot uses rimraf and babel to automatically transpile the code.

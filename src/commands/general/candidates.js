@@ -27,17 +27,15 @@ export default class PlayerCommand extends Command {
     for (let index = 0; index < candidats.length; index++) {
       const participant = candidats[index].name;
 
-      if (index > candidats.length / 2) right += `\n\n${participant}`;
+      if (index >= candidats.length / 2) right += `\n\n${participant}`;
       else left += `\n\n${participant}`;
     }
 
     if (candidats.length < 3) {
       const players = await getCandidates();
       embed.setDescription(
-        `Het seizoen is geëindigd, ${
-          players.filter((player) => player.lastWeek === week)[0].name
-        } was de mol en ${
-          players.filter((player) => player.lastWeek === week - 1)[0].name
+        `Het seizoen is geëindigd, ${players.filter((player) => player.lastWeek === week)[0].name
+        } was de mol en ${players.filter((player) => player.lastWeek === week - 1)[0].name
         } heeft gewonnen`
       );
     } else {

@@ -61,6 +61,7 @@ if (process.env.NODE_ENV !== "production") {
   const client = new CommandoClient({
     commandPrefix: prefix,
     owner: owners,
+    ws: { intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILD_MEMBERS'] }
   });
 
   client.registry

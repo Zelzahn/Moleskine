@@ -114,7 +114,7 @@ export default class VoteCommand extends Command {
     const current_score = await getRemainingPoints(userId, guildId);
     if (score > current_score)
       throw new Error(
-        "You can not spend more points than you currently have. (You have: ${current_score})"
+        `You can not spend more points than you currently have. (You have: ${current_score})`
       );
 
     for (const [p, val] of persons) {

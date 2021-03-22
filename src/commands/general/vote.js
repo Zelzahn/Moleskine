@@ -52,9 +52,8 @@ export default class VoteCommand extends Command {
         title: "Wie denk je dat er allemaal de aflevering zal overleven?",
         description: `Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200\nMogelijke deelnemers zijn: **${names}**`,
         footer: {
-          text: `Gelieve in ${
-            this.waitingTime / 1000
-          } seconden te reageren. Of zeg 'cancelled' om te annuleren.`,
+          text: `Gelieve in ${this.waitingTime / 1000
+            } seconden te reageren. Of zeg 'cancelled' om te annuleren.`,
         },
       });
 
@@ -74,7 +73,7 @@ export default class VoteCommand extends Command {
 
       personsArg = collected.first().content;
 
-      if (["cancelled", "c", "canceled"].includes(personsArg)) {
+      if (["cancelled", "c", "canceled"].includes(personsArg.toLowerCase())) {
         this.succesfullyProcessed(collected.first());
         logger.log(
           "info",
@@ -151,7 +150,7 @@ export default class VoteCommand extends Command {
       for (let index = 0; index < participants.length; index++) {
         const participant = participants[index];
 
-        if (index > participants.length / 2)
+        if (index >= participants.length / 2)
           right += `\n\n${participant.emoji}: ${participant.name}`;
         else left += `\n\n${participant.emoji}: ${participant.name}`;
       }

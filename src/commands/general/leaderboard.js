@@ -27,15 +27,15 @@ export default class LeaderboardCommand extends Command {
 
     let description = "";
 
-    leaderboard.forEach((user, index) => {
-      const expandedUser = this.client.users.cache.get(user.userId);
+    await leaderboard.forEach(async (user, index) => {
+      const expandedUser = await this.client.users.fetch(user.userId);
       description += `\n\`${index + 1}.${
         index + 1 < 10 ? " " : ""
-      }\` ${expandedUser.toString()}:\t**${user.score} ${
+      }\` ${expandedUser}:\t**${user.score} ${
         user.score == 1 ? "punt" : "punten"
       }**`;
     });
-
+    
     embed.setDescription(description);
 
     message.say(embed);

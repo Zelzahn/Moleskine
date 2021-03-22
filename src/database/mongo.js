@@ -123,7 +123,7 @@ export const getBet = async (userId, guildId, week, candidate) => {
 
 export const getUserBets = async (userId, guildId, week) => {
   const user = await getUserId(userId, guildId);
-  return await Bet.find({ user, week });
+  return await Bet.find({ user, week }).populate("candidate");
 };
 
 export const getWeekBets = async (week) => {
@@ -204,7 +204,7 @@ export const existsMoleBet = async (userId, guildId) => {
 export const getMoleBet = async (userId, guildId) => {
   const user = await getUserId(userId, guildId);
   const week = await getWeek();
-  return await MoleBet.findOne({ user: user, week: week });
+  return await MoleBet.findOne({ user: user, week: week }).populate("mole");
 };
 
 export const getMoleBets = async (userId, guildId) => {

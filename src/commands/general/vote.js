@@ -8,6 +8,7 @@ import {
   placeBet,
   placeMoleBet,
   existsMoleBet,
+  getSetting,
 } from "../../database/mongo";
 
 export default class VoteCommand extends Command {
@@ -27,108 +28,115 @@ export default class VoteCommand extends Command {
   }
 
   async run(message, args) {
+    const canVote = await getSetting("canVote");
+    if (!canVote) return;
+
     const userId = message.author.id;
     const guildId = message.guild.id;
     const participants = await getCurrentCandidates();
 
     let personsArg;
     let collected;
-    if (args) {
-      personsArg = args;
+    const current_score = await getRemainingPoints(userId, guildId);
 
-      logger.log(
-        "info",
-        `${message.author.username} (${message.author.id}) has used vote, with arguments.`
-      );
-    } else {
-      logger.log(
-        "info",
-        `${message.author.username} (${message.author.id}) has used vote, without arguments.`
-      );
+    if (current_score > 0) {
+      if (args) {
+        personsArg = args;
 
-      let names = participants.map((p) => p.name);
-      names = names.join(", ");
-      const survivorEmbed = await message.embed({
-        title: "Wie denk je dat er allemaal de aflevering zal overleven?",
-        description: `Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200\nMogelijke deelnemers zijn: **${names}**`,
-        footer: {
-          text: `Gelieve in ${this.waitingTime / 1000
-            } seconden te reageren. Of zeg 'cancelled' om te annuleren.`,
-        },
-      });
-
-      collected = await message.channel
-        .awaitMessages((user) => user.author.id == userId, {
-          max: 1,
-          time: this.waitingTime,
-          errors: ["time"],
-        })
-        .catch(() => {
-          message.delete();
-          survivorEmbed.delete();
-          throw new Error(
-            `Timeout: ${message.author.toString()}, you waited too long to give your bets.`
-          );
-        });
-
-      personsArg = collected.first().content;
-
-      if (["cancelled", "c", "canceled"].includes(personsArg.toLowerCase())) {
-        this.succesfullyProcessed(collected.first());
         logger.log(
           "info",
-          `${message.author.username} (${message.author.id}) has cancelled their vote.`
+          `${message.author.username} (${message.author.id}) has used vote, with arguments.`
         );
-        return;
+      } else {
+        logger.log(
+          "info",
+          `${message.author.username} (${message.author.id}) has used vote, without arguments.`
+        );
+
+        let names = participants.map((p) => p.name);
+        names = names.join(", ");
+        const survivorEmbed = await message.embed({
+          title: "Wie denk je dat er allemaal de aflevering zal overleven?",
+          description: `Syntax: [naam]:[bedrag]\nVoorbeeld: Alice:200 Bob:600 Carol:200\nMogelijke deelnemers zijn: **${names}**`,
+          footer: {
+            text: `Gelieve in ${
+              this.waitingTime / 1000
+            } seconden te reageren. Of zeg 'cancelled' om te annuleren.`,
+          },
+        });
+
+        collected = await message.channel
+          .awaitMessages((user) => user.author.id == userId, {
+            max: 1,
+            time: this.waitingTime,
+            errors: ["time"],
+          })
+          .catch(() => {
+            message.delete();
+            survivorEmbed.delete();
+            throw new Error(
+              `Timeout: ${message.author.toString()}, you waited too long to give your bets.`
+            );
+          });
+
+        personsArg = collected.first().content;
+
+        if (["cancelled", "c", "canceled"].includes(personsArg.toLowerCase())) {
+          this.succesfullyProcessed(collected.first());
+          logger.log(
+            "info",
+            `${message.author.username} (${message.author.id}) has cancelled their vote.`
+          );
+          return;
+        }
       }
-    }
 
-    // survivorEmbed.delete();
+      // survivorEmbed.delete();
 
-    let persons = personsArg
-      .replace(/ *\: */g, ":")
-      .split(" ")
-      .map((person) => person.split(":"))
-      .map(([p, v]) => [p.toLowerCase(), Number(v)]);
+      let persons = personsArg
+        .replace(/ *\: */g, ":")
+        .split(" ")
+        .map((person) => person.split(":"))
+        .map(([p, v]) => [p.toLowerCase(), Number(v)]);
 
-    const selectedParticipants = participants.filter((p) =>
-      persons.some(([person, _]) => p.name.toLowerCase() == person)
-    );
-
-    if (selectedParticipants.length == 0)
-      throw new Error("No valid participants given.");
-
-    for (const [_, val] of persons) {
-      if (val < 0) throw new Error("You can not give negative points.");
-
-      if (val < 1) throw new Error("A bet should at least be 1.");
-
-      if (!Number.isInteger(val))
-        throw new Error(
-          "Only numbers belonging to the strict natural numbers are allowed."
-        );
-    }
-
-    const score = persons.reduce((a, [_, b]) => a + b, 0);
-    const current_score = await getRemainingPoints(userId, guildId);
-    if (score > current_score)
-      throw new Error(
-        `You can not spend more points than you currently have. (You have: ${current_score})`
+      const selectedParticipants = participants.filter((p) =>
+        persons.some(([person, _]) => p.name.toLowerCase() == person)
       );
 
-    for (const [p, val] of persons) {
-      await placeBet(userId, guildId, p, val).catch((err) => {
-        if (collected) collected.first().react("❌");
-        else message.react("❌");
+      if (selectedParticipants.length == 0)
+        throw new Error("No valid participants given.");
 
-        if (err.message === "CastError")
-          throw new Error("Have you forgotten to put the ':'?");
+      for (const [_, val] of persons) {
+        if (val < 0) throw new Error("You can not give negative points.");
 
-        throw new Error(err.message);
-      });
+        if (val < 1) throw new Error("A bet should at least be 1.");
+
+        if (!Number.isInteger(val))
+          throw new Error(
+            "Only numbers belonging to the strict natural numbers are allowed."
+          );
+      }
+
+      const score = persons.reduce((a, [_, b]) => a + b, 0);
+      if (score > current_score)
+        throw new Error(
+          `You can not spend more points than you currently have. (You have: ${current_score})`
+        );
+
+      for (const [p, val] of persons) {
+        await placeBet(userId, guildId, p, val).catch((err) => {
+          if (collected) collected.first().react("❌");
+          else message.react("❌");
+
+          if (err.message === "CastError")
+            throw new Error("Have you forgotten to put the ':'?");
+
+          throw new Error(err.message);
+        });
+      }
+
+      this.succesfullyProcessed(collected ? collected.first() : message);
     }
-
-    this.succesfullyProcessed(collected ? collected.first() : message);
 
     if (await existsMoleBet(userId, guildId)) {
       // const said = await message.say(

@@ -73,23 +73,31 @@ export default class NextWeekCommand extends Command {
           key: "candidate",
           prompt: "Please provide a candidate to eliminate",
           type: "string",
+          default: ""
         },
+        {
+          key: "candidate2",
+          prompt: "Please provide a candidate to eliminate",
+          default: "",
+          type: "string"
+        }
       ],
     });
   }
 
-  async run(message, { candidate }) {
+  async run(message, { candidate, candidate2 }) {
     const owners = await getSetting("owners");
 
     if (owners.includes(message.author.id)) {
       const current = await getCurrentCandidates();
+      const filtered = current.filter((c) => c.name.toLowerCase() === candidate.toLowerCase() || c.name.toLowerCase() === candidate2.toLowerCase());
+      const one = candidate2.equals("");
+      const no_one = candidate.equals("") && one;
       if (
-        current.filter((c) => c.name.toLowerCase() === candidate.toLowerCase())
-          .length !== 0
+        no_one || (one && filtered.length === 1) || filtered.length === 2
       ) {
-        const effectiveC = current.filter(
-          (c) => c.name.toLowerCase() === candidate.toLowerCase()
-        )[0];
+        const effectiveC = no_one ? null : filtered[0];
+        const effectiveC2 = one ? null : filtered[1];
         // Calculate all points
         const week = await getWeek();
         const users = await getAllUsers();
@@ -97,7 +105,7 @@ export default class NextWeekCommand extends Command {
           const bets = await getUserBets(user.userId, user.guildId, week);
           let count = 0;
           for (let bet of bets) {
-            if (!bet.candidate.equals(effectiveC._id)) {
+            if (no_one || !(bet.candidate.equals(effectiveC._id) || (!one && bet.candidate.equals(effectiveC2._id)))) {
               count += bet.amount;
             }
           }
@@ -126,7 +134,13 @@ export default class NextWeekCommand extends Command {
         });
 
         // Update Week
-        await eliminateCandidate(candidate.toLowerCase());
+        if (!no_one) {
+          await eliminateCandidate(candidate.toLowerCase());
+          if (!one) {
+            await eliminateCandidate(candidate2.toLowerCase());
+          }
+        }
+
         message.react("✅");
 
         // Notify all servers
@@ -135,7 +149,7 @@ export default class NextWeekCommand extends Command {
           let embed = new MessageEmbed()
             .setTitle("De Mol: Nieuwe Week")
             .setDescription(
-              `${candidate} was geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
+              `${candidate + one ? "was" : `en ${candidate2} waren`}  geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
             );
           ch.embed(embed);
 
@@ -155,7 +169,7 @@ export default class NextWeekCommand extends Command {
         });
       } else {
         throw new Error(
-          `${candidate} is not a candidate or not in the game anymore`
+          `${candidate + one ? "" : `or ${candidate2}`} is not a candidate or not in the game anymore`
         );
       }
     }

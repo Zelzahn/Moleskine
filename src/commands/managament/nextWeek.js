@@ -1,5 +1,6 @@
 import { Command } from "discord.js-commando";
-import { MessageEmbed } from "discord.js";
+import { ChartJSNodeCanvas } from "chartjs-node-canvas";
+import { MessageEmbed, MessageAttachment } from "discord.js";
 import {
   getSetting,
   getCurrentCandidates,
@@ -10,8 +11,53 @@ import {
   addScore,
   resetRemainingPoints,
   getAllChannels,
+  getAllMoleBets,
 } from "../../database/mongo";
 import { error } from "../../utils/printError";
+
+const width = 800;
+const height = 600;
+
+const chartCallback = (ChartJS) => {
+  ChartJS.plugins.register({
+    beforeDraw: (chartInstance) => {
+      const { chart } = chartInstance;
+      const { ctx } = chart;
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, chart.width, chart.height);
+    },
+  });
+};
+
+const genConfig = (keys, values) => ({
+  type: "bar",
+  data: {
+    labels: keys,
+    datasets: [
+      {
+        data: values,
+        backgroundColor: "#7289d9",
+      },
+    ],
+  },
+  options: {
+    legend: {
+      display: false,
+    },
+    scales: {
+      yAxes: [
+        {
+          ticks: {
+            beginAtZero: true,
+            callback: (value) => {
+              if (value % 1 === 0) return value;
+            },
+          },
+        },
+      ],
+    },
+  },
+});
 
 export default class NextWeekCommand extends Command {
   constructor(client) {
@@ -58,11 +104,32 @@ export default class NextWeekCommand extends Command {
           await addScore(user.userId, user.guildId, count);
           await resetRemainingPoints(user.userId, user.guildId);
         });
+
+        // Get the connected guilds and their moles
+        const channels = await getAllChannels();
+        const moleBets = await getAllMoleBets();
+        const guildMoles = channels.map(({ guildId }) => {
+          const filteredMoles = moleBets.filter(
+            ({ user }) => user.guildId === guildId
+          );
+          return filteredMoles.reduce((sums, { mole }) => {
+            sums[mole.name] = (sums[mole.name] || 0) + 1;
+            return sums;
+          }, {});
+        });
+
+        // The canvas used to generate the chart
+        const canvas = new ChartJSNodeCanvas({
+          width,
+          height,
+          chartCallback,
+        });
+
         // Update Week
         await eliminateCandidate(candidate.toLowerCase());
         message.react("✅");
-        // Notify all servers ?
-        const channels = await getAllChannels();
+
+        // Notify all servers
         channels.forEach(async (channel) => {
           ch = this.client.channels.get(channel.channelId);
           let embed = new MessageEmbed()
@@ -71,6 +138,20 @@ export default class NextWeekCommand extends Command {
               `${candidate} was geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
             );
           ch.embed(embed);
+
+          // Generate the mole chart associated with this guild
+          const guildMole = guildMoles.shift();
+          const configuration = genConfig(
+            Object.keys(guildMole),
+            Object.values(guildMole)
+          );
+
+          const image = await canvas.renderToBuffer(configuration);
+          const attachment = new MessageAttachment(image);
+          ch.embed(
+            new MessageEmbed({ title: "Dit was vorige week jullie mol:" })
+          );
+          ch.say(attachment);
         });
       } else {
         throw new Error(

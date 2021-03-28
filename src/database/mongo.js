@@ -223,5 +223,5 @@ export const getMoleBetsByCandidate = async (userId, guildId, candidate) => {
 };
 
 export const getAllMoleBets = async () => {
-  return await MoleBet.find();
+  return await MoleBet.find().populate("user").populate("mole");
 };

@@ -29,7 +29,8 @@ export default class VoteCommand extends Command {
 
   async run(message, args) {
     const canVote = await getSetting("canVote");
-    if (canVote === "false") return;
+    if (canVote.toLowerCase() == "false")
+      throw new Error("Voting is disabled for this week.");
 
     const userId = message.author.id;
     const guildId = message.guild.id;

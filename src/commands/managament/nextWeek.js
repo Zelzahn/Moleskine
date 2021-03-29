@@ -106,14 +106,13 @@ export default class NextWeekCommand extends Command {
           const bets = await getUserBets(user.userId, user.guildId, week);
           let count = 0;
           for (let bet of bets) {
-            if (no_one || !(bet.candidate.equals(effectiveC._id) || (!one && bet.candidate.equals(effectiveC2._id)))) {
+            if (no_one || !(bet.candidate === effectiveC._id || (!one && bet.candidate === effectiveC2._id))) {
               count += bet.amount;
             }
           }
           await addScore(user.userId, user.guildId, count);
           await resetRemainingPoints(user.userId, user.guildId);
         });
-
         // Get the connected guilds and their moles
         const channels = await getAllChannels();
         const moleBets = await getAllMoleBets();
@@ -126,14 +125,14 @@ export default class NextWeekCommand extends Command {
             return sums;
           }, {});
         });
-
+	logger.log("info", "Not in map")
         // The canvas used to generate the chart
         const canvas = new ChartJSNodeCanvas({
           width,
           height,
           chartCallback,
         });
-
+	logger.log("info", "Not in gettin guilds and their moles")
         // Update Week
         await eliminateCandidate(candidate.toLowerCase(), candidate2.toLowerCase());
 
@@ -142,13 +141,14 @@ export default class NextWeekCommand extends Command {
         // Notify all servers
         channels.forEach(async (channel) => {
           logger.log("info", `ChannelId: ${channel.channelId}`);
-          ch = this.client.channels.fetch(channel.channelId);
+          let ch = await this.client.channels.fetch(channel.channelId);
+	  logger.log("info", `Channel: ${ch.name}`)
           let embed = new MessageEmbed()
             .setTitle("De Mol: Nieuwe Week")
             .setDescription(
-              `${candidate + one ? "was" : `en ${candidate2} waren`}  geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
+              `${candidate + (one ? "was" : `en ${candidate2} waren`)}  geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
             );
-          ch.embed(embed);
+          ch.send(embed);
 
           // Generate the mole chart associated with this guild
           const guildMole = guildMoles.shift();
@@ -159,10 +159,10 @@ export default class NextWeekCommand extends Command {
 
           const image = await canvas.renderToBuffer(configuration);
           const attachment = new MessageAttachment(image);
-          ch.embed(
+          ch.send(
             new MessageEmbed({ title: "Dit was vorige week jullie mol:" })
           );
-          ch.say(attachment);
+          ch.send(attachment);
         });
       } else {
         throw new Error(
@@ -173,6 +173,8 @@ export default class NextWeekCommand extends Command {
   }
 
   onError(err, message) {
+	  console.log("ERROR");
+    console.log(err);
     error(err, message);
   }
 }

@@ -168,8 +168,6 @@ export default class NextWeekCommand extends Command {
         );
       }
     }
-    await addScore(user.userId, user.guildId, count);
-    await resetRemainingPoints(user.userId, user.guildId);
   }
 
   onError(err, message) {

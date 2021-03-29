@@ -74,14 +74,14 @@ export default class NextWeekCommand extends Command {
           key: "candidate",
           prompt: "Please provide a candidate to eliminate",
           type: "string",
-          default: ""
+          default: "",
         },
         {
           key: "candidate2",
           prompt: "Please provide a candidate to eliminate",
           default: "",
-          type: "string"
-        }
+          type: "string",
+        },
       ],
     });
   }
@@ -91,12 +91,14 @@ export default class NextWeekCommand extends Command {
 
     if (owners.includes(message.author.id)) {
       const current = await getCurrentCandidates();
-      const filtered = current.filter((c) => c.name.toLowerCase() === candidate.toLowerCase() || c.name.toLowerCase() === candidate2.toLowerCase());
+      const filtered = current.filter(
+        (c) =>
+          c.name.toLowerCase() === candidate.toLowerCase() ||
+          c.name.toLowerCase() === candidate2.toLowerCase()
+      );
       const one = candidate2 === "";
       const no_one = candidate === "" && one;
-      if (
-        no_one || (one && filtered.length === 1) || filtered.length === 2
-      ) {
+      if (no_one || (one && filtered.length === 1) || filtered.length === 2) {
         const effectiveC = no_one ? null : filtered[0];
         const effectiveC2 = one ? null : filtered[1];
         // Calculate all points
@@ -106,7 +108,13 @@ export default class NextWeekCommand extends Command {
           const bets = await getUserBets(user.userId, user.guildId, week);
           let count = 0;
           for (let bet of bets) {
-            if (no_one || !(bet.candidate === effectiveC._id || (!one && bet.candidate === effectiveC2._id))) {
+            if (
+              no_one ||
+              !(
+                bet.candidate.equals(effectiveC._id) ||
+                (!one && bet.candidate.equals(effectiveC2._id))
+              )
+            ) {
               count += bet.amount;
             }
           }
@@ -125,16 +133,19 @@ export default class NextWeekCommand extends Command {
             return sums;
           }, {});
         });
-	logger.log("info", "Not in map")
+
         // The canvas used to generate the chart
         const canvas = new ChartJSNodeCanvas({
           width,
           height,
           chartCallback,
         });
-	logger.log("info", "Not in gettin guilds and their moles")
+
         // Update Week
-        await eliminateCandidate(candidate.toLowerCase(), candidate2.toLowerCase());
+        await eliminateCandidate(
+          candidate.toLowerCase(),
+          candidate2.toLowerCase()
+        );
 
         message.react("✅");
 
@@ -142,11 +153,13 @@ export default class NextWeekCommand extends Command {
         channels.forEach(async (channel) => {
           logger.log("info", `ChannelId: ${channel.channelId}`);
           let ch = await this.client.channels.fetch(channel.channelId);
-	  logger.log("info", `Channel: ${ch.name}`)
+          logger.log("info", `Channel: ${ch.name}`);
           let embed = new MessageEmbed()
             .setTitle("De Mol: Nieuwe Week")
             .setDescription(
-              `${candidate + (one ? "was" : `en ${candidate2} waren`)}  geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
+              `${
+                candidate + (one ? " was" : ` en ${candidate2} waren`)
+              }  geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
             );
           ch.send(embed);
 
@@ -158,23 +171,26 @@ export default class NextWeekCommand extends Command {
           );
 
           const image = await canvas.renderToBuffer(configuration);
-          const attachment = new MessageAttachment(image);
+          const attachment = new MessageAttachment(image, "chart.png");
           ch.send(
-            new MessageEmbed({ title: "Dit was vorige week jullie mol:" })
+            new MessageEmbed()
+              .setTitle("Dit was vorige week jullie mol:")
+              .attachFiles(attachment)
+              .setImage("attachment://chart.png")
           );
           ch.send(attachment);
         });
       } else {
         throw new Error(
-          `${candidate + one ? "" : `or ${candidate2}`} is not a candidate or not in the game anymore`
+          `${
+            candidate + one ? "" : `or ${candidate2}`
+          } is not a candidate or not in the game anymore`
         );
       }
     }
   }
 
   onError(err, message) {
-	  console.log("ERROR");
-    console.log(err);
     error(err, message);
   }
 }

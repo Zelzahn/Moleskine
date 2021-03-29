@@ -157,9 +157,9 @@ export default class NextWeekCommand extends Command {
           let embed = new MessageEmbed()
             .setTitle("De Mol: Nieuwe Week")
             .setDescription(
-              `${
+              `||${
                 candidate + (one ? " was" : ` en ${candidate2} waren`)
-              }  geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
+              }||  geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
             );
           ch.send(embed);
 

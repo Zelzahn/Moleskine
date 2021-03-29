@@ -151,15 +151,13 @@ export default class NextWeekCommand extends Command {
 
         // Notify all servers
         channels.forEach(async (channel) => {
-          logger.log("info", `ChannelId: ${channel.channelId}`);
           let ch = await this.client.channels.fetch(channel.channelId);
-          logger.log("info", `Channel: ${ch.name}`);
           let embed = new MessageEmbed()
             .setTitle("De Mol: Nieuwe Week")
             .setDescription(
               `||${
-                candidate + (one ? " was" : ` en ${candidate2} waren`)
-              }||  geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
+                candidate + (one ? "|| was" : `|| en ||${candidate2}|| waren`)
+              } geëlimineerd en een nieuwe week is begonnen. Iedereen kan weer 1000 punten verdelen over de overige deelnemers.`
             );
           ch.send(embed);
 
@@ -178,7 +176,6 @@ export default class NextWeekCommand extends Command {
               .attachFiles(attachment)
               .setImage("attachment://chart.png")
           );
-          ch.send(attachment);
         });
       } else {
         throw new Error(

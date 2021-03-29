@@ -104,8 +104,8 @@ export default class VoteCommand extends Command {
         persons.some(([person, _]) => p.name.toLowerCase() == person)
       );
 
-      if (selectedParticipants.length == 0)
-        throw new Error("No valid participants given.");
+      if (selectedParticipants.length == persons.length)
+        throw new Error("At least 1 of your participants is not valid.");
 
       for (const [_, val] of persons) {
         if (val < 0) throw new Error("You can not give negative points.");

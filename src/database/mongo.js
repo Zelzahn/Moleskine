@@ -85,7 +85,7 @@ export const getCurrentCandidates = async () => {
 export const eliminateCandidate = async (candidate, candidate2) => {
   const week = await getWeek();
   await Candidate.updateMany(
-    { name: { $and: [{ $ne: candidate }, { $ne: candidate2 }] }, lastWeek: week },
+    { name: { $nin: [candidate, candidate2] }, lastWeek: week },
     { lastWeek: week + 1 }
   );
   await Config.updateOne({ name: "week" }, { $inc: { value: 1 } });

@@ -14,6 +14,7 @@ import {
   getAllMoleBets,
 } from "../../database/mongo";
 import { error } from "../../utils/printError";
+import { logger } from "../..";
 
 const width = 800;
 const height = 600;
@@ -140,7 +141,8 @@ export default class NextWeekCommand extends Command {
 
         // Notify all servers
         channels.forEach(async (channel) => {
-          ch = this.client.channels.get(channel.channelId);
+          logger.log("info", `ChannelId: ${channel.channelId}`);
+          ch = this.client.channels.fetch(channel.channelId);
           let embed = new MessageEmbed()
             .setTitle("De Mol: Nieuwe Week")
             .setDescription(

@@ -93,7 +93,6 @@ export default class VoteCommand extends Command {
       }
 
       // survivorEmbed.delete();
-
       let persons = personsArg
         .replace(/ *\: */g, ":")
         .split(" ")
@@ -104,7 +103,7 @@ export default class VoteCommand extends Command {
         persons.some(([person, _]) => p.name.toLowerCase() == person)
       );
 
-      if (selectedParticipants.length == persons.length)
+      if (selectedParticipants.length !== persons.length)
         throw new Error("At least 1 of your participants is not valid.");
 
       for (const [_, val] of persons) {

@@ -82,10 +82,10 @@ export const getCurrentCandidates = async () => {
   return await Candidate.find({ lastWeek: week });
 };
 
-export const eliminateCandidate = async (candidate) => {
+export const eliminateCandidate = async (candidate, candidate2) => {
   const week = await getWeek();
   await Candidate.updateMany(
-    { name: { $ne: candidate }, lastWeek: week },
+    { name: { $and: [{ $ne: candidate }, { $ne: candidate2 }] }, lastWeek: week },
     { lastWeek: week + 1 }
   );
   await Config.updateOne({ name: "week" }, { $inc: { value: 1 } });

@@ -91,8 +91,8 @@ export default class NextWeekCommand extends Command {
     if (owners.includes(message.author.id)) {
       const current = await getCurrentCandidates();
       const filtered = current.filter((c) => c.name.toLowerCase() === candidate.toLowerCase() || c.name.toLowerCase() === candidate2.toLowerCase());
-      const one = candidate2.equals("");
-      const no_one = candidate.equals("") && one;
+      const one = candidate2 === "";
+      const no_one = candidate === "" && one;
       if (
         no_one || (one && filtered.length === 1) || filtered.length === 2
       ) {
@@ -134,12 +134,7 @@ export default class NextWeekCommand extends Command {
         });
 
         // Update Week
-        if (!no_one) {
-          await eliminateCandidate(candidate.toLowerCase());
-          if (!one) {
-            await eliminateCandidate(candidate2.toLowerCase());
-          }
-        }
+        await eliminateCandidate(candidate.toLowerCase(), candidate2.toLowerCase());
 
         message.react("✅");
 

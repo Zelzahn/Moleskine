@@ -102,10 +102,10 @@ export default class NextWeekCommand extends Command {
         const effectiveC = no_one ? null : filtered[0];
         const effectiveC2 = one ? null : filtered[1];
         // Calculate all points
-        const week = await getWeek();
+        const currWeek = await getWeek();
         const users = await getAllUsers();
         users.forEach(async (user) => {
-          const bets = await getUserBets(user.userId, user.guildId, week);
+          const bets = await getUserBets(user.userId, user.guildId, currWeek);
           let count = 0;
           for (let bet of bets) {
             if (
@@ -126,7 +126,7 @@ export default class NextWeekCommand extends Command {
         const moleBets = await getAllMoleBets();
         const guildMoles = channels.map(({ guildId }) => {
           const filteredMoles = moleBets.filter(
-            ({ user }) => user.guildId === guildId
+            ({ user, week }) => user.guildId === guildId && week === currWeek
           );
           return filteredMoles.reduce((sums, { mole }) => {
             sums[mole.name] = (sums[mole.name] || 0) + 1;
@@ -180,7 +180,7 @@ export default class NextWeekCommand extends Command {
       } else {
         throw new Error(
           `${
-            candidate + one ? "" : `or ${candidate2}`
+            candidate + (one ? "" : ` or ${candidate2}`)
           } is not a candidate or not in the game anymore`
         );
       }

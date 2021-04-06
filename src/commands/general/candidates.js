@@ -22,6 +22,18 @@ export default class PlayerCommand extends Command {
     const week = await getWeek();
     let embed = new MessageEmbed().setTitle(`Huidige kandidaten week ${week}`);
     const candidats = await getCurrentCandidates();
+
+    if (candidats.length < 3) {
+      const players = await getCandidates();
+      embed.setDescription(
+        `Het seizoen is geëindigd, ${candidats[0].name} was de mol en ${
+          players.filter((player) => player.lastWeek === week - 1)[0].name
+        } heeft gewonnen`
+      );
+      message.embed(embed);
+      return;
+    }
+
     let left = "";
     let right = "";
     for (let index = 0; index < candidats.length; index++) {
@@ -31,17 +43,9 @@ export default class PlayerCommand extends Command {
       else left += `\n\n${participant}`;
     }
 
-    if (candidats.length < 3) {
-      const players = await getCandidates();
-      embed.setDescription(
-        `Het seizoen is geëindigd, ${players.filter((player) => player.lastWeek === week)[0].name
-        } was de mol en ${players.filter((player) => player.lastWeek === week - 1)[0].name
-        } heeft gewonnen`
-      );
-    } else {
-      embed.addField("\u200B", left, true);
-      embed.addField("\u200B", right, true);
-    }
+    embed.addField("\u200B", left, true);
+    embed.addField("\u200B", right, true);
+
     message.embed(embed);
   }
 }

@@ -32,6 +32,9 @@ export default class SettingCommand extends Command {
       if (setting.toLowerCase() === "week")
         await setSetting("week", Number(value));
       else await setSetting(setting, value);
+      message.react("✅");
+    } else {
+      message.react("❌");
     }
   }
 }

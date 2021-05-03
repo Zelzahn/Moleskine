@@ -66,7 +66,6 @@ export default class EndSeasonCommand extends Command {
           let count = 0;
           for (let bet of bets) {
             if (
-              bet.candidate.equals(effectiveM._id) ||
               bet.candidate.equals(effectiveW._id)
             ) {
               count += bet.amount;

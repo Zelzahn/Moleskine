@@ -1,14 +1,87 @@
 import { Command } from "discord.js-commando";
+import { MessageEmbed, MessageAttachment } from "discord.js";
 import {
   getSetting,
   getCurrentCandidates,
   getWeek,
   getAllUsers,
+  getAllChannels,
+  getAllMoleBets,
   getUserBets,
   getMoleBets,
   addScore,
   eliminateCandidate,
 } from "../../database/mongo";
+import { ChartJSNodeCanvas } from "chartjs-node-canvas";
+import colorLib from "@kurkle/color";
+
+const width = 800;
+const height = 600;
+
+const COLORS = [
+  "#4dc9f6",
+  "#f67019",
+  "#f53794",
+  "#537bc4",
+  "#acc236",
+  "#166a8f",
+  "#00a950",
+  "#58595b",
+  "#8549ba",
+];
+
+function transparentize(value, opacity) {
+  var alpha = opacity === undefined ? 0.5 : 1 - opacity;
+  return colorLib(value).alpha(alpha).rgbString();
+}
+
+const chartCallback = (ChartJS) => {
+  ChartJS.plugins.register({
+    beforeDraw: (chartInstance) => {
+      const { chart } = chartInstance;
+      const { ctx } = chart;
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, chart.width, chart.height);
+    },
+  });
+};
+
+const weeks = [...Array(8).keys()];
+weeks.shift(); // Array starts at 0
+
+const genConfig = (data) => ({
+  type: "line",
+  data: {
+    labels: weeks,
+    datasets: data,
+  },
+  options: {
+    scales: {
+      xAxes: [
+        {
+          scaleLabel: {
+            display: true,
+            labelString: "Week",
+          },
+        },
+      ],
+      yAxes: [
+        {
+          scaleLabel: {
+            display: true,
+            labelString: "Aantal stemmen",
+          },
+          ticks: {
+            beginAtZero: true,
+            callback: (value) => {
+              if (value % 1 === 0) return value;
+            },
+          },
+        },
+      ],
+    },
+  },
+});
 
 export default class EndSeasonCommand extends Command {
   constructor(client) {
@@ -44,7 +117,7 @@ export default class EndSeasonCommand extends Command {
         current.filter(
           (c) =>
             c.name.toLowerCase() === winner.toLowerCase() ||
-            c.name === mole.toLowerCase()
+            c.name.toLowerCase() === mole.toLowerCase()
         ).length === 2
       ) {
         const effectiveW = current.filter(
@@ -60,14 +133,13 @@ export default class EndSeasonCommand extends Command {
         )[0];
         const week = await getWeek();
         const users = await getAllUsers();
+
         // Calculate points
         users.forEach(async (user) => {
           const bets = await getUserBets(user.userId, user.guildId, week);
           let count = 0;
           for (let bet of bets) {
-            if (
-              bet.candidate.equals(effectiveW._id)
-            ) {
+            if (bet.candidate.equals(effectiveW._id)) {
               count += bet.amount;
             }
           }
@@ -87,11 +159,87 @@ export default class EndSeasonCommand extends Command {
           const added = count + 500 * correctAmount + 100 * streak;
           await addScore(user.userId, user.guildId, added);
         });
+
         // Update Candidates
         await eliminateCandidate(effectiveL.name.toLowerCase());
         await eliminateCandidate(winner.toLowerCase());
         await eliminateCandidate(mole.toLowerCase());
         message.react("✅");
+
+        // Get the connected guilds and their moles
+        const channels = await getAllChannels();
+        const moleBets = await getAllMoleBets();
+        const guildMoles = channels.map(({ guildId }) => {
+          // get moles associated with this channel
+          const filteredMoles = moleBets.filter(
+            ({ user }) => user.guildId === guildId
+          );
+
+          // count occurences for each week
+          const weekMoles = weeks.map((i) => {
+            return filteredMoles
+              .filter(({ week }) => week == i)
+              .reduce((sums, { mole }) => {
+                sums[mole.name] = (sums[mole.name] || 0) + 1;
+                return sums;
+              }, {});
+          });
+
+          // get the most voted for each week
+          return weekMoles.map((week) => {
+            const max = Math.max(...Object.values(week));
+
+            return Object.entries(week)
+              .filter((elem) => elem[1] === max)
+              .reduce((a, e, i) => ((a[e[0]] = e[1]), a), {});
+          });
+        });
+
+        // The canvas used to generate the chart
+        const canvas = new ChartJSNodeCanvas({
+          width,
+          height,
+          chartCallback,
+        });
+
+        channels.forEach(async (channel) => {
+          let ch = await this.client.channels.fetch(channel.channelId);
+          const guildMole = guildMoles.shift();
+
+          let data = {};
+
+          for (const week in guildMole) {
+            const moles = guildMole[week];
+            const molesArr = Object.entries(moles);
+
+            for (const mole of molesArr) {
+              if (mole[0] in data) data[mole[0]][week] = mole[1];
+              else {
+                data[mole[0]] = Array(7).fill(0);
+                data[mole[0]][week] = mole[1];
+              }
+            }
+          }
+
+          data = Object.entries(data).map((candidate, index) => ({
+            label: candidate[0],
+            data: candidate[1],
+            borderColor: COLORS[index],
+            backgroundColor: transparentize(COLORS[index], 0.5),
+            fill: false,
+            tension: 0,
+          }));
+
+          const configuration = genConfig(data);
+          const image = await canvas.renderToBuffer(configuration);
+          const attachment = new MessageAttachment(image, "chart.png");
+          ch.send(
+            new MessageEmbed()
+              .setTitle("Dit was jullie mol over de weken heen:")
+              .attachFiles(attachment)
+              .setImage("attachment://chart.png")
+          );
+        });
       } else {
         throw new Error(
           `It is not the last week yet or ${winner} or ${mole} is not in the game anymore`
@@ -101,6 +249,7 @@ export default class EndSeasonCommand extends Command {
   }
 
   onError(err, message) {
+    console.log(err);
     error(err, message);
   }
 }

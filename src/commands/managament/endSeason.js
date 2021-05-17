@@ -11,6 +11,7 @@ import {
   getMoleBets,
   addScore,
   eliminateCandidate,
+  getAllScores
 } from "../../database/mongo";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import colorLib from "@kurkle/color";
@@ -50,7 +51,7 @@ const weeks = [...Array(8).keys()];
 weeks.shift(); // Array starts at 0
 
 const genConfig = (data) => ({
-  type: "line",
+  type: "bar",
   data: {
     labels: weeks,
     datasets: data,
@@ -169,8 +170,8 @@ export default class EndSeasonCommand extends Command {
         // Get the connected guilds and their moles
         const channels = await getAllChannels();
         const moleBets = await getAllMoleBets();
-        const guildMoles = channels.map(({ guildId }) => {
-          // get moles associated with this channel
+        const guildMoles = Object.assign({}, ...channels.map(({ guildId }) => {
+          // get moles associated with this guild
           const filteredMoles = moleBets.filter(
             ({ user }) => user.guildId === guildId
           );
@@ -185,15 +186,15 @@ export default class EndSeasonCommand extends Command {
               }, {});
           });
 
-          // get the most voted for each week
-          return weekMoles.map((week) => {
-            const max = Math.max(...Object.values(week));
+          // get the mole bets for each week
+          return ({
+            [guildId]: weekMoles.map((week) => {
 
-            return Object.entries(week)
-              .filter((elem) => elem[1] === max)
-              .reduce((a, e, i) => ((a[e[0]] = e[1]), a), {});
+              return Object.entries(week)
+                .reduce((a, e, i) => ((a[e[0]] = e[1]), a), {});
+            })
           });
-        });
+        }));
 
         // The canvas used to generate the chart
         const canvas = new ChartJSNodeCanvas({
@@ -201,11 +202,9 @@ export default class EndSeasonCommand extends Command {
           height,
           chartCallback,
         });
-
         channels.forEach(async (channel) => {
           let ch = await this.client.channels.fetch(channel.channelId);
-          const guildMole = guildMoles.shift();
-
+          const guildMole = guildMoles[channel.guildId];
           let data = {};
 
           for (const week in guildMole) {
@@ -215,12 +214,11 @@ export default class EndSeasonCommand extends Command {
             for (const mole of molesArr) {
               if (mole[0] in data) data[mole[0]][week] = mole[1];
               else {
-                data[mole[0]] = Array(7).fill(0);
+                data[mole[0]] = Array(7).fill(0.05);
                 data[mole[0]][week] = mole[1];
               }
             }
           }
-
           data = Object.entries(data).map((candidate, index) => ({
             label: candidate[0],
             data: candidate[1],
@@ -233,7 +231,31 @@ export default class EndSeasonCommand extends Command {
           const configuration = genConfig(data);
           const image = await canvas.renderToBuffer(configuration);
           const attachment = new MessageAttachment(image, "chart.png");
-          ch.send(
+          const leaderboard = await getAllScores(channel.guildId);
+          const expandedUser = await this.client.users.fetch(leaderboard[0].userId);
+          let embed = new MessageEmbed()
+            .setTitle("De Mol: Einde Seizoen")
+            .setDescription(
+              `||${winner}|| won dit seizoen van *De Mol* en ontmaskerde zo ||${mole}|| als mol.
+              ${expandedUser} won de competitie en behaalde zo'n ${leaderboard[0].score} punten.
+              `
+            );
+
+          const lb = new MessageEmbed().setTitle("Leaderboard");
+
+          let description = "";
+
+          for (const [index, user] of leaderboard.entries()) {
+            const expandedUser = await this.client.users.fetch(user.userId);
+            description += `\n\`${index + 1}.${index + 1 < 10 ? " " : ""
+              }\` ${expandedUser}:\t**${user.score} ${user.score == 1 ? "punt" : "punten"
+              }**`;
+          }
+
+          lb.setDescription(description);
+          await ch.send(embed);
+          await ch.send(lb);
+          await ch.send(
             new MessageEmbed()
               .setTitle("Dit was jullie mol over de weken heen:")
               .attachFiles(attachment)

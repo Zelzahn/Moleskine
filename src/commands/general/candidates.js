@@ -26,9 +26,8 @@ export default class PlayerCommand extends Command {
     if (candidats.length < 3) {
       const players = await getCandidates();
       embed.setDescription(
-        `Het seizoen is geëindigd, ${candidats[0].name} was de mol en ${
-          players.filter((player) => player.lastWeek === week - 1)[0].name
-        } heeft gewonnen`
+        `Het seizoen is geëindigd, ||${players.filter((player) => player.lastWeek === week - 1)[0].name}|| was de mol en ||${players.filter((player) => player.lastWeek === week - 2)[0].name
+        }|| heeft gewonnen`
       );
       message.embed(embed);
       return;

@@ -27,6 +27,7 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }} 
         script: |
+          cd ${{ secrets.WORK_DIR }}
           npm run clean
           npm run transpile
     - name: Restart Moleskine

@@ -16,7 +16,7 @@ jobs:
       with:
         host: ${{ secrets.SSH_HOST }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: "cd ${{ secrets.WORK_DIR }}; git pull git@github.com-Moleskine:Zelzahn/Moleskine.git"
+        script: "cd ${{ secrets.WORK_DIR }}; git pull git@github.com-Moleskine:${{ secrets.SSH_HOST}}/Moleskine.git"
         username: ${{ secrets.SSH_USER }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
     - name: Rebuild the bot

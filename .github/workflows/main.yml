@@ -36,6 +36,6 @@ jobs:
       with:
         host: ${{ secrets.SSH_HOST }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: "service moleskine restart"
+        script: "sudo systemctl restart moleskine"
         username: ${{ secrets.SSH_USER }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}

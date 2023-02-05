@@ -33,7 +33,7 @@ const COLORS = [
 ];
 
 function transparentize(value, opacity) {
-    var alpha = opacity === undefined ? 0.5 : 1 - opacity;
+    const alpha = opacity === undefined ? 0.5 : 1 - opacity;
     return colorLib(value).alpha(alpha).rgbString();
 }
 
@@ -88,11 +88,11 @@ const genConfig = (data) => ({
 export default class EndMidSeasonCommand extends Command {
     constructor(client) {
         super(client, {
-            name: "endseason",
-            aliases: ["end"],
+            name: "endmidseason",
+            aliases: ["endmid"],
             group: "management",
-            description: "End the season by setting the mole and",
-            memberName: "endseason",
+            description: "End the season midway by setting the mole and",
+            memberName: "endmidseason",
             hidden: true,
             args: [
                 {
@@ -107,6 +107,7 @@ export default class EndMidSeasonCommand extends Command {
                 },
                 {
                     key: "firstmole",
+                    prompt: "The first mole",
                     default: "",
                     type: "string"
                 }
@@ -183,7 +184,7 @@ export default class EndMidSeasonCommand extends Command {
                 await eliminateCandidate(effectiveL.name.toLowerCase());
                 await eliminateCandidate(winner.toLowerCase());
                 await eliminateCandidate(mole.toLowerCase());
-                message.react("✅");
+                await message.react("✅");
 
                 // Get the connected guilds and their moles
                 const channels = await getAllChannels();

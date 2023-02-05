@@ -1,23 +1,41 @@
+
+name: Deploy
+
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-  
+
 jobs:
-  run_pull:
-    name: run pull
+  deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: install ssh keys
-      # check this thread to understand why its needed:
-      # https://stackoverflow.com/a/70447517
-      run: |
-        install -m 600 -D /dev/null ~/.ssh/id_rsa
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
-    - name: connect and pull
-      run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && git checkout main && git pull && exit"
-    - name: cleanup
-      run: rm -rf ~/.ssh
+    - name: Deploy to server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: "cd ${{ secrets.WORK_DIR }}; git pull git@github.com-Moleskine:Zelzahn/Moleskine.git"
+        username: ${{ secrets.SSH_USER }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+    - name: Rebuild the bot
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        username: ${{ secrets.SSH_USER }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }} 
+        script: |
+          cd ${{ secrets.WORK_DIR }}
+          npm install
+          npm run clean
+          npm run transpile
+    - name: Restart Moleskine
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: "sudo systemctl restart moleskine"
+        username: ${{ secrets.SSH_USER }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}

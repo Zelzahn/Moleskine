@@ -111,7 +111,6 @@ export default class EndMidSeasonCommand extends Command {
                 {
                     key: "firstmole",
                     prompt: "The first mole",
-                    default: "",
                     type: "string"
                 }
             ],

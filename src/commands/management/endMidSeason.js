@@ -85,6 +85,9 @@ const genConfig = (data) => ({
     },
 });
 
+/**
+ * This command should be used when a mole left midway the season and was replaced by another
+ */
 export default class EndMidSeasonCommand extends Command {
     constructor(client) {
         super(client, {
@@ -108,7 +111,6 @@ export default class EndMidSeasonCommand extends Command {
                 {
                     key: "firstmole",
                     prompt: "The first mole",
-                    default: "",
                     type: "string"
                 }
             ],
@@ -119,6 +121,7 @@ export default class EndMidSeasonCommand extends Command {
         const owners = await getSetting("owners");
         if (owners.includes(message.author.id)) {
             const current = await getCurrentCandidates();
+            const allCand = await getCandidates();
             if (
                 current.length === 3 &&
                 winner != mole &&
@@ -126,7 +129,13 @@ export default class EndMidSeasonCommand extends Command {
                     (c) =>
                         c.name.toLowerCase() === winner.toLowerCase() ||
                         c.name.toLowerCase() === mole.toLowerCase()
-                ).length === 2
+                ).length === 2 &&
+                allCand.filter(
+                    (c) => c.name.toLowerCase() === fMole.toLowerCase()
+                ).length === 1 &&
+                current.filter(
+                    (c) => c.name.toLowerCase() === fMole.toLowerCase()
+                ).length === 0
             ) {
                 const effectiveW = current.filter(
                     (c) => c.name.toLowerCase() === winner.toLowerCase()
@@ -139,10 +148,10 @@ export default class EndMidSeasonCommand extends Command {
                         c.name.toLowerCase() !== winner.toLowerCase() &&
                         c.name.toLowerCase() !== mole.toLowerCase()
                 )[0];
-                const all = await getCandidates();
-                let effectiveFM = all.filter((c) => c.name.toLowerCase() === fMole.toLowerCase());
-                effectiveFM = effectiveFM.length === 0 ? undefined : effectiveFM[0];
-                let mweek = effectiveFM === undefined ? 0 : effectiveFM.week;
+                const weakMole = allCand.filter(
+                    (c) => c.name.toLowerCase() === fMole.toLowerCase()
+                )[0];
+                const weakMoleEndWeek = weakMole.lastWeek;
                 const week = await getWeek();
                 const users = await getAllUsers();
 
@@ -156,25 +165,19 @@ export default class EndMidSeasonCommand extends Command {
                         }
                     }
                     let moleBets = await getMoleBets(user.userId, user.guildId);
-                    moleBets = moleBets.filter((bet) => (bet.week > mweek && bet.mole.equals(effectiveM._id)) || bet.mole.equals(effectiveFM._id));
+                    moleBets = moleBets.filter(
+                        (bet) => (bet.mole.equals(effectiveM._id) && bet.week >= weakMoleEndWeek) || bet.mole.equals(weakMole._id) && bet.week < weakMoleEndWeek
+                    );
                     const correctAmount = moleBets.length;
-                    let isstreak = true;
-                    let w = week;
                     let streak = 0;
+                    let w = week;
                     for (let bet of moleBets.sort((a, b) => a.week - b.week)) {
-                        if (isstreak) {
-                            if (bet.week == w) {
-                                streak++;
-                                w--;
-                            } else {
-                                isstreak = false;
-                            }
-                        } else if (mweek === bet.week) {
-                            isstreak = true;
-                            w = mweek - 1;
+                        if (bet.week == w) {
                             streak++;
+                            w++;
+                        } else {
+                            break;
                         }
-
                     }
                     const added = count + 500 * correctAmount + 100 * streak;
                     await addScore(user.userId, user.guildId, added);
@@ -184,7 +187,7 @@ export default class EndMidSeasonCommand extends Command {
                 await eliminateCandidate(effectiveL.name.toLowerCase());
                 await eliminateCandidate(winner.toLowerCase());
                 await eliminateCandidate(mole.toLowerCase());
-                await message.react("✅");
+                message.react("✅");
 
                 // Get the connected guilds and their moles
                 const channels = await getAllChannels();
@@ -256,8 +259,9 @@ export default class EndMidSeasonCommand extends Command {
                         .setTitle("De Mol: Einde Seizoen")
                         .setDescription(
                             `||${winner}|| won dit seizoen van *De Mol* en ontmaskerde zo ||${mole}|| als mol.
-              ${expandedUser} won de competitie en behaalde zo'n ${leaderboard[0].score} punten.
-              `
+                            Tijdens het seizon verliet ||${fMole}|| *De Mol* en gaf daarbij de titel als mol op.
+                            ${expandedUser} won de competitie en behaalde zo'n ${leaderboard[0].score} punten.
+                            `
                         );
 
                     const lb = new MessageEmbed().setTitle("Leaderboard");
@@ -283,7 +287,7 @@ export default class EndMidSeasonCommand extends Command {
                 });
             } else {
                 throw new Error(
-                    `It is not the last week yet or ${winner} or ${mole} is not in the game anymore`
+                    `It is not the last week yet or ${winner} or ${mole} is not in the game anymore or ${fMole} is not a candidate who left`
                 );
             }
         }
